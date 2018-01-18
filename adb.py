@@ -27,14 +27,13 @@ class ADB(object):
         if is_async:
             subprocess.Popen(command)
         else:
-            output = subprocess.check_output(command)
-            # TODO: handle output properly (are the output bytes always utf-8?)
-            return output.decode('utf-8')
+            output = subprocess.check_output(command, stderr=subprocess.STDOUT).strip()
+            return output.decode()
 
     def shell(self, command: list, is_async: bool = False):
         # TODO: make sure to have the command as a list
         command.insert(0, 'shell')
-        self.execute(command, is_async)
+        return self.execute(command, is_async)
 
     def get_version(self) -> str:
         # TODO: handle errors
