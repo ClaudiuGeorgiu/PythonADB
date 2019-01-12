@@ -2,26 +2,63 @@
 # coding: utf-8
 
 import logging
+import os
 import re
+import shutil
 import subprocess
 
-
-logger = logging.getLogger(__name__)
+from typing import List
 
 
 class ADB(object):
 
     def __init__(self, debug: bool = False):
-        if debug:
-            logger.setLevel(logging.DEBUG)
+        self.logger = logging.getLogger('{0}.{1}'.format(__name__, self.__class__.__name__))
 
-        # TODO: init constructor
+        if debug:
+            self.logger.setLevel(logging.DEBUG)
+
+        # If adb executable is not added to PATH variable, it can be specified by using the
+        # ADB_PATH environment variable.
+        if 'ADB_PATH' in os.environ:
+            self.adb_path: str = os.environ['ADB_PATH']
+        else:
+            self.adb_path: str = 'adb'
+
+        if not self.adb_is_available():
+            raise FileNotFoundError('Adb executable is not available! Make sure to have adb (Android Debug Bridge) '
+                                    'installed and added to the PATH variable, or specify the adb path by using the '
+                                    'ADB_PATH environment variable.')
+
+    def adb_is_available(self) -> bool:
+        """
+        Check if adb executable is available.
+
+        :return: True if abd executable is available for usage, False otherwise.
+        """
+        return shutil.which(self.adb_path) is not None
+
+    def get_available_devices(self) -> List[str]:
+        """
+        Get a list with the serials of the devices currently connected to adb.
+
+        :return: A list of strings, each string is a device serial number.
+        """
+        output = subprocess.check_output([self.adb_path, 'devices'], stderr=subprocess.STDOUT).strip().decode()
+
+        devices = []
+        for line in output.splitlines():
+            tokens = line.strip().split()
+            if len(tokens) == 2 and tokens[1] == 'device':
+                # Add to the list the ip and port of the device.
+                devices.append(tokens[0])
+        return devices
 
     def execute(self, command: list, is_async: bool = False):
         # TODO: make sure to have the command as a list
-        command.insert(0, 'adb')
+        command.insert(0, self.adb_path)
 
-        logger.debug('Running command \'{0}\' (async={1})'.format(' '.join(command), is_async))
+        self.logger.debug('Running command \'{0}\' (async={1})'.format(' '.join(command), is_async))
 
         # TODO: create another method for the async version?
         if is_async:
@@ -86,15 +123,3 @@ class ADB(object):
     def uninstall_app(self, package_name: str):
         # TODO: handle errors (error message: Failure [DELETE_FAILED_INTERNAL_ERROR])
         self.execute(['uninstall', '{0}'.format(package_name)])
-
-
-if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s> [%(levelname)s][%(funcName)s()] %(message)s',
-                        datefmt='%d/%m/%Y %H:%M:%S')
-
-    # Some random tests.
-    adb = ADB(debug=True)
-    adb.reconnect()
-    adb.wait_for_device()
-    adb.remount()
-    adb.get_version()
