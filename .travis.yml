@@ -4,6 +4,7 @@ android:
   components:
     - "tools"
     - "platform-tools"
+    - "android-23"
     - "sys-img-x86-android-23"
 
 ## Install Python 3.6.8
@@ -30,7 +31,8 @@ before_script:
 
 install:
   - "cd $TRAVIS_BUILD_DIR"
-  - "sudo pip3.6 install -r requirements.txt"
+  # TODO: use pip3.6
+  - "sudo pip3 install -r requirements.txt"
 
 script:
   - "cd $TRAVIS_BUILD_DIR"
