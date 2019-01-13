@@ -13,7 +13,7 @@ android:
 addons:
   apt:
     sources:
-      - "ppa:deadsnakes/ppa"
+      - sourceline: "ppa:deadsnakes/ppa"
     packages:
       - "python3.6"
 
