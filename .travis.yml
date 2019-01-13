@@ -1,0 +1,28 @@
+language: "android"
+
+android:
+  components:
+    - "tools"
+    - "platform-tools"
+    - "sys-img-x86-android-23"
+
+# Install Python 3.7.2
+before_install:
+    - "sudo apt update"
+    - "sudo apt install -y build-essential checkinstall libreadline-gplv2-dev libncursesw5-dev"
+    - "sudo apt install -y libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev"
+    - "cd /usr/src"
+    - "sudo wget https://www.python.org/ftp/python/3.7.2/Python-3.7.2.tgz"
+    - "cd Python-3.7.0"
+    - "sudo ./configure --enable-optimizations"
+    - "sudo make altinstall"
+    - "pip3.7 install codecov"
+
+install:
+  - "pip3.7 install -r requirements.txt"
+
+script:
+  - "pytest --cov=./"
+
+after_success:
+  - "codecov"
