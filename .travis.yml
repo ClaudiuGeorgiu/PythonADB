@@ -17,10 +17,10 @@ before_install:
     - "cd Python-3.6.8"
     - "sudo ./configure --enable-optimizations"
     - "sudo make -j altinstall"
-    - "pip3.6 install codecov"
+    - "sudo pip3.6 install codecov"
 
 install:
-  - "pip3.6 install -r requirements.txt"
+  - "sudo pip3.6 install -r requirements.txt"
 
 script:
   - "pytest --cov=./"
