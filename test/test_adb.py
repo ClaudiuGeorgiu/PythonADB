@@ -3,7 +3,7 @@
 
 import pytest
 
-from adb.adb import ADB
+from ..adb.adb import ADB
 
 
 @pytest.fixture(scope='session')
