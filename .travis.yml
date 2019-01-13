@@ -20,10 +20,13 @@ before_install:
     - "sudo pip3.6 install codecov"
 
 install:
+  - "cd $TRAVIS_BUILD_DIR"
   - "sudo pip3.6 install -r requirements.txt"
 
 script:
+  - "cd $TRAVIS_BUILD_DIR"
   - "pytest --cov=./"
 
 after_success:
+  - "cd $TRAVIS_BUILD_DIR"
   - "codecov"
