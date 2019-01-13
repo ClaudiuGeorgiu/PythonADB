@@ -13,7 +13,7 @@ def adb_instance() -> ADB:
 
 class TestAdbAvailability(object):
 
-    def test_adb_is_available(self, adb_instance):
+    def test_adb_is_available(self, adb_instance: ADB):
         assert adb_instance.adb_is_available() is True
 
     def test_adb_not_available(self, monkeypatch):
@@ -24,6 +24,15 @@ class TestAdbAvailability(object):
 
 class TestAdbVersion(object):
 
-    def test_adb_version(self, adb_instance):
+    def test_adb_version(self, adb_instance: ADB):
         adb_version = adb_instance.get_version()
-        assert isinstance(adb_version, str) and adb_version != ''
+        assert isinstance(adb_version, str) and adb_version is not ''
+
+
+class TestAdbDevice(object):
+
+    def test_adb_device_connected(self, adb_instance: ADB):
+        connected_devices = adb_instance.get_available_devices()
+        assert isinstance(connected_devices, list)
+        assert len(connected_devices) > 0
+        assert isinstance(connected_devices[0], str) and connected_devices[0] is not ''

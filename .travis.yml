@@ -17,7 +17,7 @@ before_install:
     - "sudo tar xzf Python-3.6.8.tgz"
     - "cd Python-3.6.8"
     - "sudo ./configure --enable-optimizations"
-    - "sudo make -j altinstall"
+    - "sudo make --silent --jobs altinstall"
     - "sudo pip3.6 install codecov"
 
 # Prepare the Android emulator
