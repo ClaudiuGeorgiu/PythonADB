@@ -4,31 +4,28 @@ android:
   components:
     - "tools"
     - "platform-tools"
-    - "android-23"
-    - "sys-img-x86-android-23"
+    - "android-21"
+    - "sys-img-armeabi-v7a-android-21"
 
-## Install Python 3.6.8
-#before_install:
-#    - "sudo apt update"
-#    - "sudo apt install -y build-essential checkinstall libreadline-gplv2-dev libncursesw5-dev"
-#    - "sudo apt install -y libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev"
-#    - "cd /usr/src"
-#    - "sudo wget https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz"
-#    - "sudo tar xzf Python-3.6.8.tgz"
-#    - "cd Python-3.6.8"
-#    - "sudo ./configure --enable-optimizations"
-#    - "sudo make -j altinstall"
-#    - "sudo pip3.6 install codecov"
+# Install Python 3.6.8
+before_install:
+    - "sudo apt update"
+    - "sudo apt install -y build-essential checkinstall libreadline-gplv2-dev libncursesw5-dev"
+    - "sudo apt install -y libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev"
+    - "cd /usr/src"
+    - "sudo wget https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz"
+    - "sudo tar xzf Python-3.6.8.tgz"
+    - "cd Python-3.6.8"
+    - "sudo ./configure --enable-optimizations"
+    - "sudo make -j altinstall"
+    - "sudo pip3.6 install codecov"
 
 # Prepare the Android emulator
-#before_script:
-before_install:
-  - android list targets
-  - echo no | android create avd --force -n test -t android-23 --abi x86
-  - emulator -avd test -no-audio -no-window &
-  - android-wait-for-emulator
-  - adb shell input keyevent 82 &
-  - "avdmanager list"
+before_script:
+  - "echo no | android create avd --force -n test -t android-21 --abi armeabi-v7a"
+  - "emulator -avd test -no-audio -no-window &"
+  - "android-wait-for-emulator"
+  - "adb shell input keyevent 82 &"
 
 install:
   - "cd $TRAVIS_BUILD_DIR"
