@@ -4,7 +4,7 @@
 
 [![Travis Build Status](https://travis-ci.com/ClaudiuGeorgiu/PythonADB.svg)](https://travis-ci.com/ClaudiuGeorgiu/PythonADB)
 [![Code Coverage](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB/badge.svg)](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB)
-[![Python Version](http://img.shields.io/badge/Python-3.6-green.svg)](https://www.python.org/downloads/release/python-362/)
+[![Python Version](http://img.shields.io/badge/Python-3.6-green.svg)](https://www.python.org/downloads/release/python-368/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/blob/master/LICENSE)
 
 
