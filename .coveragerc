@@ -1,0 +1,13 @@
+[run]
+branch = True
+omit =
+    # Omit virtualenv directory.
+    venv/*
+    # Omit test directory.
+    test/*
+    # Omit the example script.
+    start.py
+
+[report]
+exclude_lines =
+    if __name__ == .__main__.:
