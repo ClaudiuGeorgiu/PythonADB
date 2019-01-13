@@ -10,12 +10,10 @@ android:
     - "sys-img-armeabi-v7a-android-21"
 
 # Install Python 3.6
-addons:
-  apt:
-    sources:
-      - sourceline: "ppa:deadsnakes/ppa"
-    packages:
-      - "python3.6"
+before_install:
+  - "sudo add-apt-repository ppa:deadsnakes/ppa"
+  - "sudo apt-get update"
+  - "sudo apt-get install python3.6"
 
 # Prepare the Android emulator
 before_script:
