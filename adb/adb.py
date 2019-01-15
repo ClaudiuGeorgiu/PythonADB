@@ -7,7 +7,7 @@ import re
 import shutil
 import subprocess
 
-from typing import List
+from typing import Optional, Union, List
 
 
 class ADB(object):
@@ -38,13 +38,47 @@ class ADB(object):
         """
         return shutil.which(self.adb_path) is not None
 
+    def execute(self, command: List[str], is_async: bool = False) -> Optional[str]:
+        """
+        Execute an adb command and return the output of the command as a string.
+
+        :param command: The command to execute, formatted as a list of strings.
+        :param is_async: If set to True, the adb command will run in background and the program will continue its
+                         execution. If False (default), the program will wait until the adb command returns a result.
+        :return: The (string) output of the command. If the method is called with the parameter is_async = True,
+                 None will be returned.
+        """
+        if not isinstance(command, list):
+            raise TypeError('The command to execute should be passed as a list of strings')
+
+        try:
+            command.insert(0, self.adb_path)
+            self.logger.debug('Running command `{0}` (async={1})'.format(' '.join(command), is_async))
+
+            if is_async:
+                # Adb command will run in background, nothing to return.
+                subprocess.Popen(command)
+                return None
+            else:
+                output = subprocess.check_output(command, stderr=subprocess.STDOUT) \
+                                   .strip().decode(errors='backslashreplace')
+                self.logger.debug('Command `{0}` successfully returned: {1}'.format(' '.join(command), output))
+                return output
+        except subprocess.CalledProcessError as e:
+            self.logger.debug('Command `{0}` exited with error: {1}'.format(
+                ' '.join(command), e.output.decode(errors='backslashreplace') if e.output else e))
+            raise
+        except Exception as e:
+            self.logger.error('Generic error during `{0}` command execution: {1}'.format(' '.join(command), e))
+            raise
+
     def get_available_devices(self) -> List[str]:
         """
         Get a list with the serials of the devices currently connected to adb.
 
         :return: A list of strings, each string is a device serial number.
         """
-        output = subprocess.check_output([self.adb_path, 'devices'], stderr=subprocess.STDOUT).strip().decode()
+        output = self.execute(['devices'])
 
         devices = []
         for line in output.splitlines():
@@ -53,19 +87,6 @@ class ADB(object):
                 # Add to the list the ip and port of the device.
                 devices.append(tokens[0])
         return devices
-
-    def execute(self, command: list, is_async: bool = False):
-        # TODO: make sure to have the command as a list
-        command.insert(0, self.adb_path)
-
-        self.logger.debug('Running command \'{0}\' (async={1})'.format(' '.join(command), is_async))
-
-        # TODO: create another method for the async version?
-        if is_async:
-            subprocess.Popen(command)
-        else:
-            output = subprocess.check_output(command, stderr=subprocess.STDOUT).strip()
-            return output.decode()
 
     def shell(self, command: list, is_async: bool = False):
         # TODO: make sure to have the command as a list
@@ -102,16 +123,34 @@ class ADB(object):
         # TODO: handle errors
         self.execute(['reboot'])
 
-    def pull_file(self, device_path: str, host_path: str = None):
-        # TODO: handle errors
-        pull_cmd = ['pull', '{0}'.format(device_path)]
-        if host_path:
-            pull_cmd.append('{0}'.format(host_path))
-        self.execute(pull_cmd)
-
     def push_file(self, host_path: str, device_path: str):
         # TODO: handle errors
         self.execute(['push', '{0}'.format(host_path), '{0}'.format(device_path)])
+
+    def pull_file(self, device_path: Union[str, List[str]], host_path: str) -> str:
+        """
+        Copy a file (or a list of files) from the Android device to the computer connected through adb.
+
+        :param device_path: The path of the file on the Android device. This parameter also accepts a list of paths
+                            (strings) to copy more files at the same time.
+        :param host_path: The path on the host computer where the file(s) should be copied. If multiple files are
+                          copied at the same time, this path should refer to an existing directory on the host.
+        :return: The string with the result of the copy operation.
+        """
+        if isinstance(device_path, list) and not os.path.isdir(host_path):
+            raise NotADirectoryError('When copying multiple files, the destination host path should be an '
+                                     'existing directory: no "{0}" directory found'.format(host_path))
+
+        pull_cmd = ['pull']
+        if isinstance(device_path, list):
+            pull_cmd.extend(device_path)
+        else:
+            pull_cmd.append(device_path)
+
+        pull_cmd.append(host_path)
+
+        # TODO: check 100% copy progress before returning
+        return self.execute(pull_cmd)
 
     def install_app(self, package_name: str, reinstall: bool = False):
         # TODO: handle errors
