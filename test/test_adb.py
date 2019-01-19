@@ -3,6 +3,7 @@
 
 import os
 import pathlib
+import subprocess
 
 import pytest
 
@@ -59,3 +60,22 @@ class TestFileInteraction(object):
         assert os.path.isfile(dest_file_2)
         assert os.path.getsize(dest_file_1) > 0
         assert os.path.getsize(dest_file_2) > 0
+
+    def test_adb_pull_single_file_invalid_destination(self, adb_instance: ADB, tmp_path: pathlib.Path):
+        dest_file = tmp_path / 'invalid' / 'directory' / 'default.prop'
+        with pytest.raises(NotADirectoryError):
+            adb_instance.pull_file('/default.prop', os.fspath(dest_file))
+
+    def test_adb_pull_multiple_files_invalid_destination(self, adb_instance: ADB, tmp_path: pathlib.Path):
+        dest_file = tmp_path / 'invalid'
+        with pytest.raises(NotADirectoryError):
+            adb_instance.pull_file(['/default.prop', '/system/build.prop'], os.fspath(dest_file))
+
+    def test_adb_pull_invalid_file(self, adb_instance: ADB, tmp_path: pathlib.Path):
+        with pytest.raises(subprocess.CalledProcessError):
+            adb_instance.pull_file('/invalid.file', os.fspath(tmp_path))
+
+    def test_adb_pull_incomplete(self, adb_instance: ADB, tmp_path: pathlib.Path, monkeypatch):
+        monkeypatch.setattr(ADB, 'execute', lambda _, command: 'incomplete transfer')
+        with pytest.raises(RuntimeError):
+            adb_instance.pull_file('/default.prop', os.fspath(tmp_path))

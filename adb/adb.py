@@ -48,7 +48,7 @@ class ADB(object):
         :return: The (string) output of the command. If the method is called with the parameter is_async = True,
                  None will be returned.
         """
-        if not isinstance(command, list):
+        if not isinstance(command, list) or any(not isinstance(command_token, str) for command_token in command):
             raise TypeError('The command to execute should be passed as a list of strings')
 
         try:
@@ -65,7 +65,7 @@ class ADB(object):
                 self.logger.debug('Command `{0}` successfully returned: {1}'.format(' '.join(command), output))
                 return output
         except subprocess.CalledProcessError as e:
-            self.logger.debug('Command `{0}` exited with error: {1}'.format(
+            self.logger.error('Command `{0}` exited with error: {1}'.format(
                 ' '.join(command), e.output.decode(errors='backslashreplace') if e.output else e))
             raise
         except Exception as e:
@@ -137,9 +137,18 @@ class ADB(object):
                           copied at the same time, this path should refer to an existing directory on the host.
         :return: The string with the result of the copy operation.
         """
+
+        # When copying multiple files at the same time, make sure the host path refers to an existing directory.
         if isinstance(device_path, list) and not os.path.isdir(host_path):
             raise NotADirectoryError('When copying multiple files, the destination host path should be an '
-                                     'existing directory: no "{0}" directory found'.format(host_path))
+                                     'existing directory: "{0}" directory was not found'.format(host_path))
+
+        # Make sure the destination directory on the host exists (adb won't create the missing directories specified
+        # on the host path). For example, if test/ directory exists on host, it can be used, but test/nested/ can be
+        # used only if it already exists on the host, otherwise adb won't create the nested/ directory.
+        if not os.path.isdir(os.path.dirname(host_path)):
+            raise NotADirectoryError('The destination host directory "{0}" was not found'
+                                     .format(os.path.dirname(host_path)))
 
         pull_cmd = ['pull']
         if isinstance(device_path, list):
@@ -149,8 +158,14 @@ class ADB(object):
 
         pull_cmd.append(host_path)
 
-        # TODO: check 100% copy progress before returning
-        return self.execute(pull_cmd)
+        output = self.execute(pull_cmd)
+
+        # Make sure the pull operation ended successfully.
+        match = re.search(r' \d+ files? pulled\. .+?\(\d+ bytes in .+?\)', output)
+        if match:
+            return output
+        else:
+            raise RuntimeError('Something went wrong during the pull operation')
 
     def install_app(self, package_name: str, reinstall: bool = False):
         # TODO: handle errors
