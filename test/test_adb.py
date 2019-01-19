@@ -80,9 +80,6 @@ class TestFileInteraction(object):
         with pytest.raises(RuntimeError):
             adb_instance.pull_file('/default.prop', os.fspath(tmp_path))
 
-
-
-
     def test_adb_push_single_valid_file(self, adb_instance: ADB, tmp_path: pathlib.Path):
         source_file_path = tmp_path / 'testfile.txt'
         # noinspection PyTypeChecker
@@ -90,7 +87,7 @@ class TestFileInteraction(object):
             source_file.write('This is a test file\n')
         result = adb_instance.push_file(os.fspath(source_file_path), '/data/local/tmp/')
         assert 'testfile.txt: 1 file pushed.' in result
-        assert '21 bytes in ' in result
+        assert '{0} bytes in '.format(os.path.getsize(source_file_path)) in result
 
     def test_adb_push_multiple_valid_files(self, adb_instance: ADB, tmp_path: pathlib.Path):
         source_file_path_1 = tmp_path / 'testfile.txt'
@@ -102,7 +99,8 @@ class TestFileInteraction(object):
         result = adb_instance.push_file([os.fspath(source_file_path_1), os.fspath(source_file_path_2)],
                                         '/data/local/tmp/')
         assert '2 files pushed.' in result
-        assert '43 bytes in ' in result
+        assert '{0} bytes in '.format(os.path.getsize(source_file_path_1) +
+                                      os.path.getsize(source_file_path_2)) in result
 
     def test_adb_push_invalid_file(self, adb_instance: ADB):
         with pytest.raises(FileNotFoundError):
