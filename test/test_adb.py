@@ -79,3 +79,52 @@ class TestFileInteraction(object):
         monkeypatch.setattr(ADB, 'execute', lambda _, command: 'incomplete transfer')
         with pytest.raises(RuntimeError):
             adb_instance.pull_file('/default.prop', os.fspath(tmp_path))
+
+
+
+
+    def test_adb_push_single_valid_file(self, adb_instance: ADB, tmp_path: pathlib.Path):
+        source_file_path = tmp_path / 'testfile.txt'
+        # noinspection PyTypeChecker
+        with open(source_file_path, 'w') as source_file:
+            source_file.write('This is a test file\n')
+        result = adb_instance.push_file(os.fspath(source_file_path), '/data/local/tmp/')
+        assert 'testfile.txt: 1 file pushed.' in result
+        assert '21 bytes in ' in result
+
+    def test_adb_push_multiple_valid_files(self, adb_instance: ADB, tmp_path: pathlib.Path):
+        source_file_path_1 = tmp_path / 'testfile.txt'
+        source_file_path_2 = tmp_path / 'other.txt'
+        # noinspection PyTypeChecker
+        with open(source_file_path_1, 'w') as source_file_1, open(source_file_path_2, 'w') as source_file_2:
+            source_file_1.write('This is a test file\n')
+            source_file_2.write('This is another file\n')
+        result = adb_instance.push_file([os.fspath(source_file_path_1), os.fspath(source_file_path_2)],
+                                        '/data/local/tmp/')
+        assert '2 files pushed.' in result
+        assert '43 bytes in ' in result
+
+    def test_adb_push_invalid_file(self, adb_instance: ADB):
+        with pytest.raises(FileNotFoundError):
+            adb_instance.push_file('', '/data/local/tmp/')
+
+    def test_adb_push_invalid_files(self, adb_instance: ADB):
+        with pytest.raises(FileNotFoundError):
+            adb_instance.push_file(['', ''], '/data/local/tmp/')
+
+    def test_adb_push_invalid_destination(self, adb_instance: ADB, tmp_path: pathlib.Path):
+        source_file_path = tmp_path / 'testfile.txt'
+        # noinspection PyTypeChecker
+        with open(source_file_path, 'w') as source_file:
+            source_file.write('This is a test file\n')
+        with pytest.raises(subprocess.CalledProcessError):
+            adb_instance.push_file(os.fspath(source_file_path), '/invalid/directory/')
+
+    def test_adb_push_incomplete(self, adb_instance: ADB, tmp_path: pathlib.Path, monkeypatch):
+        monkeypatch.setattr(ADB, 'execute', lambda _, command: 'incomplete transfer')
+        source_file_path = tmp_path / 'testfile.txt'
+        # noinspection PyTypeChecker
+        with open(source_file_path, 'w') as source_file:
+            source_file.write('This is a test file\n')
+        with pytest.raises(RuntimeError):
+            adb_instance.push_file(os.fspath(source_file_path), '/data/local/tmp/')

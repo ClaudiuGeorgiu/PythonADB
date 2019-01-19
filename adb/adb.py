@@ -123,9 +123,43 @@ class ADB(object):
         # TODO: handle errors
         self.execute(['reboot'])
 
-    def push_file(self, host_path: str, device_path: str):
-        # TODO: handle errors
-        self.execute(['push', '{0}'.format(host_path), '{0}'.format(device_path)])
+    def push_file(self, host_path: Union[str, List[str]], device_path: str) -> str:
+        """
+        Copy a file (or a list of files) from the computer to the Android device connected through adb.
+
+        :param host_path: The path of the file on the host computer. This parameter also accepts a list of paths
+                          (strings) to copy more files at the same time.
+        :param device_path: The path on the Android device where the file(s) should be copied.
+        :return: The string with the result of the copy operation.
+        """
+
+        # Make sure the files to copy exist on the host computer.
+        if isinstance(host_path, list):
+            for p in host_path:
+                if not os.path.exists(p):
+                    raise FileNotFoundError('Cannot copy "{0}" to the Android device: no such file or directory'
+                                            .format(p))
+
+        if isinstance(host_path, str) and not os.path.exists(host_path):
+            raise FileNotFoundError('Cannot copy "{0}" to the Android device: no such file or directory'
+                                    .format(host_path))
+
+        push_cmd = ['push']
+        if isinstance(host_path, list):
+            push_cmd.extend(host_path)
+        else:
+            push_cmd.append(host_path)
+
+        push_cmd.append(device_path)
+
+        output = self.execute(push_cmd)
+
+        # Make sure the pull operation ended successfully.
+        match = re.search(r'\d+ files? pushed\. .+?\(\d+ bytes in .+?\)', output.splitlines()[-1])
+        if match:
+            return output
+        else:
+            raise RuntimeError('Something went wrong during the push operation')
 
     def pull_file(self, device_path: Union[str, List[str]], host_path: str) -> str:
         """
@@ -161,7 +195,7 @@ class ADB(object):
         output = self.execute(pull_cmd)
 
         # Make sure the pull operation ended successfully.
-        match = re.search(r' \d+ files? pulled\. .+?\(\d+ bytes in .+?\)', output)
+        match = re.search(r'\d+ files? pulled\. .+?\(\d+ bytes in .+?\)', output.splitlines()[-1])
         if match:
             return output
         else:
