@@ -7,7 +7,7 @@ import re
 import shutil
 import subprocess
 
-from typing import List
+from typing import Optional, Union, List
 
 
 class ADB(object):
@@ -38,13 +38,47 @@ class ADB(object):
         """
         return shutil.which(self.adb_path) is not None
 
+    def execute(self, command: List[str], is_async: bool = False) -> Optional[str]:
+        """
+        Execute an adb command and return the output of the command as a string.
+
+        :param command: The command to execute, formatted as a list of strings.
+        :param is_async: If set to True, the adb command will run in background and the program will continue its
+                         execution. If False (default), the program will wait until the adb command returns a result.
+        :return: The (string) output of the command. If the method is called with the parameter is_async = True,
+                 None will be returned.
+        """
+        if not isinstance(command, list) or any(not isinstance(command_token, str) for command_token in command):
+            raise TypeError('The command to execute should be passed as a list of strings')
+
+        try:
+            command.insert(0, self.adb_path)
+            self.logger.debug('Running command `{0}` (async={1})'.format(' '.join(command), is_async))
+
+            if is_async:
+                # Adb command will run in background, nothing to return.
+                subprocess.Popen(command)
+                return None
+            else:
+                output = subprocess.check_output(command, stderr=subprocess.STDOUT) \
+                                   .strip().decode(errors='backslashreplace')
+                self.logger.debug('Command `{0}` successfully returned: {1}'.format(' '.join(command), output))
+                return output
+        except subprocess.CalledProcessError as e:
+            self.logger.error('Command `{0}` exited with error: {1}'.format(
+                ' '.join(command), e.output.decode(errors='backslashreplace') if e.output else e))
+            raise
+        except Exception as e:
+            self.logger.error('Generic error during `{0}` command execution: {1}'.format(' '.join(command), e))
+            raise
+
     def get_available_devices(self) -> List[str]:
         """
         Get a list with the serials of the devices currently connected to adb.
 
         :return: A list of strings, each string is a device serial number.
         """
-        output = subprocess.check_output([self.adb_path, 'devices'], stderr=subprocess.STDOUT).strip().decode()
+        output = self.execute(['devices'])
 
         devices = []
         for line in output.splitlines():
@@ -53,19 +87,6 @@ class ADB(object):
                 # Add to the list the ip and port of the device.
                 devices.append(tokens[0])
         return devices
-
-    def execute(self, command: list, is_async: bool = False):
-        # TODO: make sure to have the command as a list
-        command.insert(0, self.adb_path)
-
-        self.logger.debug('Running command \'{0}\' (async={1})'.format(' '.join(command), is_async))
-
-        # TODO: create another method for the async version?
-        if is_async:
-            subprocess.Popen(command)
-        else:
-            output = subprocess.check_output(command, stderr=subprocess.STDOUT).strip()
-            return output.decode()
 
     def shell(self, command: list, is_async: bool = False):
         # TODO: make sure to have the command as a list
@@ -102,16 +123,83 @@ class ADB(object):
         # TODO: handle errors
         self.execute(['reboot'])
 
-    def pull_file(self, device_path: str, host_path: str = None):
-        # TODO: handle errors
-        pull_cmd = ['pull', '{0}'.format(device_path)]
-        if host_path:
-            pull_cmd.append('{0}'.format(host_path))
-        self.execute(pull_cmd)
+    def push_file(self, host_path: Union[str, List[str]], device_path: str) -> str:
+        """
+        Copy a file (or a list of files) from the computer to the Android device connected through adb.
 
-    def push_file(self, host_path: str, device_path: str):
-        # TODO: handle errors
-        self.execute(['push', '{0}'.format(host_path), '{0}'.format(device_path)])
+        :param host_path: The path of the file on the host computer. This parameter also accepts a list of paths
+                          (strings) to copy more files at the same time.
+        :param device_path: The path on the Android device where the file(s) should be copied.
+        :return: The string with the result of the copy operation.
+        """
+
+        # Make sure the files to copy exist on the host computer.
+        if isinstance(host_path, list):
+            for p in host_path:
+                if not os.path.exists(p):
+                    raise FileNotFoundError('Cannot copy "{0}" to the Android device: no such file or directory'
+                                            .format(p))
+
+        if isinstance(host_path, str) and not os.path.exists(host_path):
+            raise FileNotFoundError('Cannot copy "{0}" to the Android device: no such file or directory'
+                                    .format(host_path))
+
+        push_cmd = ['push']
+        if isinstance(host_path, list):
+            push_cmd.extend(host_path)
+        else:
+            push_cmd.append(host_path)
+
+        push_cmd.append(device_path)
+
+        output = self.execute(push_cmd)
+
+        # Make sure the pull operation ended successfully.
+        match = re.search(r'\d+ files? pushed\. .+?\(\d+ bytes in .+?\)', output.splitlines()[-1])
+        if match:
+            return output
+        else:
+            raise RuntimeError('Something went wrong during the push operation')
+
+    def pull_file(self, device_path: Union[str, List[str]], host_path: str) -> str:
+        """
+        Copy a file (or a list of files) from the Android device to the computer connected through adb.
+
+        :param device_path: The path of the file on the Android device. This parameter also accepts a list of paths
+                            (strings) to copy more files at the same time.
+        :param host_path: The path on the host computer where the file(s) should be copied. If multiple files are
+                          copied at the same time, this path should refer to an existing directory on the host.
+        :return: The string with the result of the copy operation.
+        """
+
+        # When copying multiple files at the same time, make sure the host path refers to an existing directory.
+        if isinstance(device_path, list) and not os.path.isdir(host_path):
+            raise NotADirectoryError('When copying multiple files, the destination host path should be an '
+                                     'existing directory: "{0}" directory was not found'.format(host_path))
+
+        # Make sure the destination directory on the host exists (adb won't create the missing directories specified
+        # on the host path). For example, if test/ directory exists on host, it can be used, but test/nested/ can be
+        # used only if it already exists on the host, otherwise adb won't create the nested/ directory.
+        if not os.path.isdir(os.path.dirname(host_path)):
+            raise NotADirectoryError('The destination host directory "{0}" was not found'
+                                     .format(os.path.dirname(host_path)))
+
+        pull_cmd = ['pull']
+        if isinstance(device_path, list):
+            pull_cmd.extend(device_path)
+        else:
+            pull_cmd.append(device_path)
+
+        pull_cmd.append(host_path)
+
+        output = self.execute(pull_cmd)
+
+        # Make sure the pull operation ended successfully.
+        match = re.search(r'\d+ files? pulled\. .+?\(\d+ bytes in .+?\)', output.splitlines()[-1])
+        if match:
+            return output
+        else:
+            raise RuntimeError('Something went wrong during the pull operation')
 
     def install_app(self, package_name: str, reinstall: bool = False):
         # TODO: handle errors
