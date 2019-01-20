@@ -1,0 +1,35 @@
+build: "off"
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Python36-x64"
+  global:
+    VENV_TEST_DIR: "venv"
+    ANDROID_HOME: "C:\\android-sdk-windows"
+
+install:
+  - "cd \\"
+  - "appveyor DownloadFile https://dl.google.com/android/repository/sdk-tools-windows-4333796.zip"
+  - "7z x sdk-tools-windows-4333796.zip -o%ANDROID_HOME% > nul"
+  - "yes | %ANDROID_HOME%\\tools\\bin\\sdkmanager.bat \"tools\" \"platform-tools\" \"platforms;android-21\""
+  - "yes | %ANDROID_HOME%\\tools\\bin\\sdkmanager.bat \"emulator\" \"system-images;android-21;default;armeabi-v7a\""
+  - "cd %APPVEYOR_BUILD_FOLDER%"
+  - "SET PATH=%ANDROID_HOME%\\platform-tools;%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "virtualenv --clear %VENV_TEST_DIR%"
+  - "%VENV_TEST_DIR%\\Scripts\\activate.bat"
+  - "pip install codecov"
+  - "pip install -r requirements.txt"
+
+before_test:
+  - "echo no | %ANDROID_HOME%\\tools\\bin\\avdmanager.bat create avd -f -n test -k \"system-images;android-21;default;armeabi-v7a\""
+  - ps: "Start-Process \"$env:ANDROID_HOME\\emulator\\emulator.exe\" \"-avd test -no-audio -no-window\""
+  - "adb wait-for-device shell \"while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;\""
+  - "adb shell input keyevent 82"
+
+test_script:
+  - "cd %APPVEYOR_BUILD_FOLDER%"
+  - "pytest --cov=./"
+
+after_test:
+  - "cd %APPVEYOR_BUILD_FOLDER%"
+  - "codecov"
