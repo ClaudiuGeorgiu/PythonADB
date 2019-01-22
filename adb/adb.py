@@ -155,7 +155,7 @@ class ADB(object):
         output = self.execute(push_cmd)
 
         # Make sure the pull operation ended successfully.
-        match = re.search(r'\d+ files? pushed\. .+?\(\d+ bytes in .+?\)', output.splitlines()[-1])
+        match = re.search(r'\d+ files? pushed\.', output.splitlines()[-1])
         if match:
             return output
         else:
@@ -195,7 +195,7 @@ class ADB(object):
         output = self.execute(pull_cmd)
 
         # Make sure the pull operation ended successfully.
-        match = re.search(r'\d+ files? pulled\. .+?\(\d+ bytes in .+?\)', output.splitlines()[-1])
+        match = re.search(r'\d+ files? pulled\.', output.splitlines()[-1])
         if match:
             return output
         else:
