@@ -44,6 +44,13 @@ class TestAdbDevice(object):
         assert connected_devices[0] is not ''
 
 
+class TestCommandTimeout(object):
+
+    def test_adb_timeout(self, adb_instance: ADB):
+        with pytest.raises(subprocess.TimeoutExpired):
+            adb_instance.shell(['sleep', '300'], timeout=1)
+
+
 class TestFileInteraction(object):
 
     def test_adb_pull_single_valid_file(self, adb_instance: ADB, tmp_path: pathlib.Path):
