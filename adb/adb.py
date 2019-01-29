@@ -135,13 +135,14 @@ class ADB(object):
         # TODO: handle errors
         self.execute(['reboot'])
 
-    def push_file(self, host_path: Union[str, List[str]], device_path: str) -> str:
+    def push_file(self, host_path: Union[str, List[str]], device_path: str, timeout: Optional[int] = None) -> str:
         """
         Copy a file (or a list of files) from the computer to the Android device connected through adb.
 
         :param host_path: The path of the file on the host computer. This parameter also accepts a list of paths
                           (strings) to copy more files at the same time.
         :param device_path: The path on the Android device where the file(s) should be copied.
+        :param timeout: How many seconds to wait for the file copy operation before throwing an exception.
         :return: The string with the result of the copy operation.
         """
 
@@ -164,7 +165,7 @@ class ADB(object):
 
         push_cmd.append(device_path)
 
-        output = self.execute(push_cmd)
+        output = self.execute(push_cmd, timeout=timeout)
 
         # Make sure the pull operation ended successfully.
         match = re.search(r'\d+ files? pushed\.', output.splitlines()[-1])
@@ -173,7 +174,7 @@ class ADB(object):
         else:
             raise RuntimeError('Something went wrong during the push operation')
 
-    def pull_file(self, device_path: Union[str, List[str]], host_path: str) -> str:
+    def pull_file(self, device_path: Union[str, List[str]], host_path: str, timeout: Optional[int] = None) -> str:
         """
         Copy a file (or a list of files) from the Android device to the computer connected through adb.
 
@@ -181,6 +182,7 @@ class ADB(object):
                             (strings) to copy more files at the same time.
         :param host_path: The path on the host computer where the file(s) should be copied. If multiple files are
                           copied at the same time, this path should refer to an existing directory on the host.
+        :param timeout: How many seconds to wait for the file copy operation before throwing an exception.
         :return: The string with the result of the copy operation.
         """
 
@@ -204,7 +206,7 @@ class ADB(object):
 
         pull_cmd.append(host_path)
 
-        output = self.execute(pull_cmd)
+        output = self.execute(pull_cmd, timeout=timeout)
 
         # Make sure the pull operation ended successfully.
         match = re.search(r'\d+ files? pulled\.', output.splitlines()[-1])
