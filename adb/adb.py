@@ -68,8 +68,10 @@ class ADB(object):
                 subprocess.Popen(command)
                 return None
             else:
-                output = subprocess.check_output(command, stderr=subprocess.STDOUT, timeout=timeout) \
-                                   .strip().decode(errors='backslashreplace')
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                output = process.communicate(timeout=timeout)[0].strip().decode(errors='backslashreplace')
+                if process.returncode != 0:
+                    raise subprocess.CalledProcessError(process.returncode, command, output.encode())
                 self.logger.debug('Command `{0}` successfully returned: {1}'.format(' '.join(command), output))
                 return output
         except subprocess.TimeoutExpired as e:
