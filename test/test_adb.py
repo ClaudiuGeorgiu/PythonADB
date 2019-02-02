@@ -44,6 +44,17 @@ class TestAdbDevice(object):
         assert connected_devices[0] is not ''
 
 
+class TestCommandTimeout(object):
+
+    def test_adb_shell_timeout(self, adb_instance: ADB):
+        with pytest.raises(subprocess.TimeoutExpired):
+            adb_instance.shell(['sleep', '300'], timeout=3)
+
+    def test_adb_pull_timeout(self, adb_instance: ADB, tmp_path: pathlib.Path):
+        with pytest.raises(subprocess.TimeoutExpired):
+            adb_instance.pull_file('/system', os.fspath(tmp_path), timeout=3)
+
+
 class TestFileInteraction(object):
 
     def test_adb_pull_single_valid_file(self, adb_instance: ADB, tmp_path: pathlib.Path):
@@ -76,7 +87,7 @@ class TestFileInteraction(object):
             adb_instance.pull_file('/invalid.file', os.fspath(tmp_path))
 
     def test_adb_pull_incomplete(self, adb_instance: ADB, tmp_path: pathlib.Path, monkeypatch):
-        monkeypatch.setattr(ADB, 'execute', lambda _, command: 'incomplete transfer')
+        monkeypatch.setattr(ADB, 'execute', lambda _, command, timeout: 'incomplete transfer')
         with pytest.raises(RuntimeError):
             adb_instance.pull_file('/default.prop', os.fspath(tmp_path))
 
@@ -119,7 +130,7 @@ class TestFileInteraction(object):
             adb_instance.push_file(os.fspath(source_file_path), '/invalid/directory/')
 
     def test_adb_push_incomplete(self, adb_instance: ADB, tmp_path: pathlib.Path, monkeypatch):
-        monkeypatch.setattr(ADB, 'execute', lambda _, command: 'incomplete transfer')
+        monkeypatch.setattr(ADB, 'execute', lambda _, command, timeout: 'incomplete transfer')
         source_file_path = tmp_path / 'testfile.txt'
         # noinspection PyTypeChecker
         with open(source_file_path, 'w') as source_file:

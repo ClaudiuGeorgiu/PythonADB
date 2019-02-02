@@ -38,32 +38,46 @@ class ADB(object):
         """
         return shutil.which(self.adb_path) is not None
 
-    def execute(self, command: List[str], is_async: bool = False) -> Optional[str]:
+    def execute(self, command: List[str], is_async: bool = False, timeout: Optional[int] = None) -> Optional[str]:
         """
         Execute an adb command and return the output of the command as a string.
 
         :param command: The command to execute, formatted as a list of strings.
         :param is_async: If set to True, the adb command will run in background and the program will continue its
                          execution. If False (default), the program will wait until the adb command returns a result.
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
         :return: The (string) output of the command. If the method is called with the parameter is_async = True,
                  None will be returned.
         """
         if not isinstance(command, list) or any(not isinstance(command_token, str) for command_token in command):
             raise TypeError('The command to execute should be passed as a list of strings')
 
+        if timeout is not None and (not isinstance(timeout, int) or timeout <= 0):
+            raise ValueError('If a timeout is provided, it must be a positive integer')
+
+        if is_async and timeout:
+            raise RuntimeError('The timeout cannot be used when executing the program in background')
+
         try:
             command.insert(0, self.adb_path)
-            self.logger.debug('Running command `{0}` (async={1})'.format(' '.join(command), is_async))
+            self.logger.debug('Running command `{0}` (async={1}, timeout={2})'.format(' '.join(command),
+                                                                                      is_async, timeout))
 
             if is_async:
                 # Adb command will run in background, nothing to return.
                 subprocess.Popen(command)
                 return None
             else:
-                output = subprocess.check_output(command, stderr=subprocess.STDOUT) \
-                                   .strip().decode(errors='backslashreplace')
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                output = process.communicate(timeout=timeout)[0].strip().decode(errors='backslashreplace')
+                if process.returncode != 0:
+                    raise subprocess.CalledProcessError(process.returncode, command, output.encode())
                 self.logger.debug('Command `{0}` successfully returned: {1}'.format(' '.join(command), output))
                 return output
+        except subprocess.TimeoutExpired as e:
+            self.logger.error('Command `{0}` timed out: {1}'.format(
+                ' '.join(command), e.output.decode(errors='backslashreplace') if e.output else e))
+            raise
         except subprocess.CalledProcessError as e:
             self.logger.error('Command `{0}` exited with error: {1}'.format(
                 ' '.join(command), e.output.decode(errors='backslashreplace') if e.output else e))
@@ -88,10 +102,10 @@ class ADB(object):
                 devices.append(tokens[0])
         return devices
 
-    def shell(self, command: list, is_async: bool = False):
+    def shell(self, command: List[str], is_async: bool = False, timeout: Optional[int] = None) -> Optional[str]:
         # TODO: make sure to have the command as a list
         command.insert(0, 'shell')
-        return self.execute(command, is_async)
+        return self.execute(command, is_async, timeout)
 
     def get_version(self) -> str:
         # TODO: handle errors
@@ -123,13 +137,14 @@ class ADB(object):
         # TODO: handle errors
         self.execute(['reboot'])
 
-    def push_file(self, host_path: Union[str, List[str]], device_path: str) -> str:
+    def push_file(self, host_path: Union[str, List[str]], device_path: str, timeout: Optional[int] = None) -> str:
         """
         Copy a file (or a list of files) from the computer to the Android device connected through adb.
 
         :param host_path: The path of the file on the host computer. This parameter also accepts a list of paths
                           (strings) to copy more files at the same time.
         :param device_path: The path on the Android device where the file(s) should be copied.
+        :param timeout: How many seconds to wait for the file copy operation before throwing an exception.
         :return: The string with the result of the copy operation.
         """
 
@@ -152,7 +167,7 @@ class ADB(object):
 
         push_cmd.append(device_path)
 
-        output = self.execute(push_cmd)
+        output = self.execute(push_cmd, timeout=timeout)
 
         # Make sure the pull operation ended successfully.
         match = re.search(r'\d+ files? pushed\.', output.splitlines()[-1])
@@ -161,7 +176,7 @@ class ADB(object):
         else:
             raise RuntimeError('Something went wrong during the push operation')
 
-    def pull_file(self, device_path: Union[str, List[str]], host_path: str) -> str:
+    def pull_file(self, device_path: Union[str, List[str]], host_path: str, timeout: Optional[int] = None) -> str:
         """
         Copy a file (or a list of files) from the Android device to the computer connected through adb.
 
@@ -169,6 +184,7 @@ class ADB(object):
                             (strings) to copy more files at the same time.
         :param host_path: The path on the host computer where the file(s) should be copied. If multiple files are
                           copied at the same time, this path should refer to an existing directory on the host.
+        :param timeout: How many seconds to wait for the file copy operation before throwing an exception.
         :return: The string with the result of the copy operation.
         """
 
@@ -192,7 +208,7 @@ class ADB(object):
 
         pull_cmd.append(host_path)
 
-        output = self.execute(pull_cmd)
+        output = self.execute(pull_cmd, timeout=timeout)
 
         # Make sure the pull operation ended successfully.
         match = re.search(r'\d+ files? pulled\.', output.splitlines()[-1])
