@@ -162,7 +162,7 @@ class TestAppInstallation(object):
     def test_adb_already_installed_apk_error(self, adb_instance: ADB, valid_apk_path: pathlib.Path):
         result = adb_instance.install_app(os.fspath(valid_apk_path), replace_existing=True)
         assert 'Success' in result
-        with pytest.raises(subprocess.CalledProcessError):
+        with pytest.raises((subprocess.CalledProcessError, RuntimeError)):
             adb_instance.install_app(os.fspath(valid_apk_path), replace_existing=False, grant_permissions=True)
 
     def test_adb_runtime_install_error(self, adb_instance: ADB, tmp_path: pathlib.Path, monkeypatch):
@@ -179,7 +179,7 @@ class TestAppInstallation(object):
         # noinspection PyTypeChecker
         with open(invalid_apk_path, 'w') as source_file:
             source_file.write('This is not an apk file\n')
-        with pytest.raises(subprocess.CalledProcessError):
+        with pytest.raises((subprocess.CalledProcessError, RuntimeError)):
             adb_instance.install_app(os.fspath(invalid_apk_path), replace_existing=True)
 
     def test_adb_install_missing_apk_file(self, adb_instance: ADB):
@@ -193,5 +193,5 @@ class TestAppInstallation(object):
         assert 'Success' in result
 
     def test_adb_uninstall_invalid_apk(self, adb_instance: ADB):
-        with pytest.raises(RuntimeError):
+        with pytest.raises((subprocess.CalledProcessError, RuntimeError)):
             adb_instance.uninstall_app('invalid.package.name')

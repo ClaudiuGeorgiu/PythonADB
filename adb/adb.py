@@ -86,6 +86,25 @@ class ADB(object):
             self.logger.error('Generic error during `{0}` command execution: {1}'.format(' '.join(command), e))
             raise
 
+    def get_property(self, property_name: str) -> str:
+        """
+        Get the value of a property.
+
+        :param property_name: The name of the property.
+        :return: The value of the property.
+        """
+
+        return self.shell(['getprop', property_name])
+
+    def get_device_sdk_version(self) -> int:
+        """
+        Get the version of the SDK installed on the Android device (e.g., 23 for Android Marshmallow).
+
+        :return: An int with the version number.
+        """
+
+        return int(self.get_property('ro.build.version.sdk'))
+
     def get_available_devices(self) -> List[str]:
         """
         Get a list with the serials of the devices currently connected to adb.
@@ -239,7 +258,8 @@ class ADB(object):
         # Additional installation flags.
         if replace_existing:
             install_cmd.append('-r')
-        if grant_permissions:
+        if grant_permissions and self.get_device_sdk_version() >= 23:
+            # Runtime permissions exist since SDK version 23 (Android Marshmallow).
             install_cmd.append('-g')
 
         install_cmd.append(apk_path)
