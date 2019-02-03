@@ -15,6 +15,12 @@ def adb_instance() -> ADB:
     return ADB(debug=True)
 
 
+@pytest.fixture(scope='session')
+def valid_apk_path() -> pathlib.Path:
+    return pathlib.Path(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                     'test_resources', 'test.apk'))
+
+
 class TestAdbAvailability(object):
 
     def test_adb_is_available(self, adb_instance: ADB):
@@ -137,3 +143,55 @@ class TestFileInteraction(object):
             source_file.write('This is a test file\n')
         with pytest.raises(RuntimeError):
             adb_instance.push_file(os.fspath(source_file_path), '/data/local/tmp/')
+
+
+class TestAppInstallation(object):
+
+    @classmethod
+    def teardown_class(cls):
+        try:
+            # Make sure to uninstall the application used for testing.
+            ADB().uninstall_app('com.test.pythonadb')
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, RuntimeError):
+            pass
+
+    def test_adb_install_valid_apk(self, adb_instance: ADB, valid_apk_path: pathlib.Path):
+        result = adb_instance.install_app(os.fspath(valid_apk_path), replace_existing=True)
+        assert 'Success' in result
+
+    def test_adb_already_installed_apk_error(self, adb_instance: ADB, valid_apk_path: pathlib.Path):
+        result = adb_instance.install_app(os.fspath(valid_apk_path), replace_existing=True)
+        assert 'Success' in result
+        with pytest.raises(subprocess.CalledProcessError):
+            adb_instance.install_app(os.fspath(valid_apk_path), replace_existing=False, grant_permissions=True)
+
+    def test_adb_runtime_install_error(self, adb_instance: ADB, tmp_path: pathlib.Path, monkeypatch):
+        monkeypatch.setattr(ADB, 'execute', lambda _, command, timeout: 'Failure [ERROR]')
+        invalid_apk_path = tmp_path / 'invalid.apk'
+        # noinspection PyTypeChecker
+        with open(invalid_apk_path, 'w') as source_file:
+            source_file.write('This is not an apk file\n')
+        with pytest.raises(RuntimeError):
+            adb_instance.install_app(os.fspath(invalid_apk_path))
+
+    def test_adb_install_invalid_apk(self, adb_instance: ADB, tmp_path: pathlib.Path):
+        invalid_apk_path = tmp_path / 'invalid.apk'
+        # noinspection PyTypeChecker
+        with open(invalid_apk_path, 'w') as source_file:
+            source_file.write('This is not an apk file\n')
+        with pytest.raises(subprocess.CalledProcessError):
+            adb_instance.install_app(os.fspath(invalid_apk_path), replace_existing=True)
+
+    def test_adb_install_missing_apk_file(self, adb_instance: ADB):
+        with pytest.raises(FileNotFoundError):
+            adb_instance.install_app('')
+
+    def test_adb_uninstall_valid_apk(self, adb_instance: ADB, valid_apk_path: pathlib.Path):
+        result = adb_instance.install_app(os.fspath(valid_apk_path), replace_existing=True)
+        assert 'Success' in result
+        result = adb_instance.uninstall_app('com.test.pythonadb')
+        assert 'Success' in result
+
+    def test_adb_uninstall_invalid_apk(self, adb_instance: ADB):
+        with pytest.raises(RuntimeError):
+            adb_instance.uninstall_app('invalid.package.name')
