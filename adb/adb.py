@@ -43,7 +43,7 @@ class ADB(object):
         Execute an adb command and return the output of the command as a string.
 
         :param command: The command to execute, formatted as a list of strings.
-        :param is_async: If set to True, the adb command will run in background and the program will continue its
+        :param is_async: When set to True, the adb command will run in background and the program will continue its
                          execution. If False (default), the program will wait until the adb command returns a result.
         :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
         :return: The (string) output of the command. If the method is called with the parameter is_async = True,
@@ -68,7 +68,7 @@ class ADB(object):
                 subprocess.Popen(command)
                 return None
             else:
-                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 output = process.communicate(timeout=timeout)[0].strip().decode(errors='backslashreplace')
                 if process.returncode != 0:
                     raise subprocess.CalledProcessError(process.returncode, command, output.encode())
@@ -85,6 +85,25 @@ class ADB(object):
         except Exception as e:
             self.logger.error('Generic error during `{0}` command execution: {1}'.format(' '.join(command), e))
             raise
+
+    def get_property(self, property_name: str) -> str:
+        """
+        Get the value of a property.
+
+        :param property_name: The name of the property.
+        :return: The value of the property.
+        """
+
+        return self.shell(['getprop', property_name])
+
+    def get_device_sdk_version(self) -> int:
+        """
+        Get the version of the SDK installed on the Android device (e.g., 23 for Android Marshmallow).
+
+        :return: An int with the version number.
+        """
+
+        return int(self.get_property('ro.build.version.sdk'))
 
     def get_available_devices(self) -> List[str]:
         """
@@ -217,13 +236,61 @@ class ADB(object):
         else:
             raise RuntimeError('Something went wrong during the pull operation')
 
-    def install_app(self, package_name: str, reinstall: bool = False):
-        # TODO: handle errors
-        install_cmd = ['install', '{0}'.format(package_name)]
-        if reinstall:
-            install_cmd.insert(1, '-r')
-        self.execute(install_cmd)
+    def install_app(self, apk_path: str, replace_existing: bool = False,
+                    grant_permissions: bool = False, timeout: Optional[int] = None):
+        """
+        Install an application into the Android device.
 
-    def uninstall_app(self, package_name: str):
-        # TODO: handle errors (error message: Failure [DELETE_FAILED_INTERNAL_ERROR])
-        self.execute(['uninstall', '{0}'.format(package_name)])
+        :param apk_path: The path on the host computer to the application file to be installed.
+        :param replace_existing: When set to True, any old version of the application installed on the Android device
+                                 will be replaced by the new application being installed.
+        :param grant_permissions: When set to True, all the runtime permissions of the application will be granted.
+        :param timeout: How many seconds to wait for the install operation before throwing an exception.
+        :return: The string with the result of the install operation.
+        """
+
+        # Make sure the application to install is an existing file on the host computer.
+        if not os.path.isfile(apk_path):
+            raise FileNotFoundError('"{0}" apk file was not found'.format(apk_path))
+
+        install_cmd = ['install']
+
+        # Additional installation flags.
+        if replace_existing:
+            install_cmd.append('-r')
+        if grant_permissions and self.get_device_sdk_version() >= 23:
+            # Runtime permissions exist since SDK version 23 (Android Marshmallow).
+            install_cmd.append('-g')
+
+        install_cmd.append(apk_path)
+
+        output = self.execute(install_cmd, timeout=timeout)
+
+        # Make sure the install operation ended successfully. Complete list of error messages:
+        # https://android.googlesource.com/platform/frameworks/base/+/lollipop-release/core/java/android/content/pm/PackageManager.java
+        match = re.search(r'Failure \[.+?\]', output, flags=re.IGNORECASE)
+        if not match:
+            return output
+        else:
+            raise RuntimeError('Application installation failed: {0}'.format(match.group()))
+
+    def uninstall_app(self, package_name: str, timeout: Optional[int] = None):
+        """
+        Uninstall an application from the Android device.
+
+        :param package_name: The package name of the application to uninstall.
+        :param timeout: How many seconds to wait for the uninstall operation before throwing an exception.
+        :return: The string with the result of the uninstall operation.
+        """
+
+        uninstall_cmd = ['uninstall', package_name]
+
+        output = self.execute(uninstall_cmd, timeout=timeout)
+
+        # Make sure the uninstall operation ended successfully. Complete list of error messages:
+        # https://android.googlesource.com/platform/frameworks/base/+/lollipop-release/core/java/android/content/pm/PackageManager.java
+        match = re.search(r'Failure \[.+?\]', output, flags=re.IGNORECASE)
+        if not match:
+            return output
+        else:
+            raise RuntimeError('Application removal failed: {0}'.format(match.group()))
