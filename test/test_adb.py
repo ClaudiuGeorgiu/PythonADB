@@ -49,6 +49,8 @@ class TestAdbDevice(object):
 
     def test_adb_device_connected(self, adb_instance: ADB):
         connected_devices = adb_instance.get_available_devices()
+        adb_instance.target_device = connected_devices[0]
+        adb_instance.wait_for_device()
         assert isinstance(connected_devices, list)
         assert len(connected_devices) > 0
         assert isinstance(connected_devices[0], str)

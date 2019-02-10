@@ -6,20 +6,25 @@ import os
 import re
 import shutil
 import subprocess
+import time
 
 from typing import Optional, Union, List
 
 
 class ADB(object):
 
-    def __init__(self, debug: bool = False):
+    def __init__(self, device: str = None, debug: bool = False):
         """
         Android Debug Bridge (adb) object constructor.
 
+        :param device: The name of the Android device (serial number) for which to execute adb commands. Can be
+                       omitted if there is only one Android device connected to adb.
         :param debug: When set to True, more debug messages will be shown for each executed operation.
         """
 
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, self.__class__.__name__))
+
+        self._device = device
 
         if debug:
             self.logger.setLevel(logging.DEBUG)
@@ -35,6 +40,14 @@ class ADB(object):
             raise FileNotFoundError('Adb executable is not available! Make sure to have adb (Android Debug Bridge) '
                                     'installed and added to the PATH variable, or specify the adb path by using the '
                                     'ADB_PATH environment variable.')
+
+    @property
+    def target_device(self) -> str:
+        return self._device
+
+    @target_device.setter
+    def target_device(self, new_device: str):
+        self._device = new_device
 
     def is_available(self) -> bool:
         """
@@ -67,9 +80,13 @@ class ADB(object):
             raise RuntimeError('The timeout cannot be used when executing the program in background')
 
         try:
+            # Use the specified Android device serial number (if any).
+            if self.target_device:
+                command[0:0] = ['-s', self.target_device]
+
             command.insert(0, self.adb_path)
-            self.logger.debug('Running command `{0}` (async={1}, timeout={2})'.format(' '.join(command),
-                                                                                      is_async, timeout))
+            self.logger.debug('Running command `{0}` (async={1}, timeout={2})'
+                              .format(' '.join(command), is_async, timeout))
 
             if is_async:
                 # Adb command will run in background, nothing to return.
@@ -81,6 +98,10 @@ class ADB(object):
                 if process.returncode != 0:
                     raise subprocess.CalledProcessError(process.returncode, command, output.encode())
                 self.logger.debug('Command `{0}` successfully returned: {1}'.format(' '.join(command), output))
+
+                # This is needed to make sure the adb command actually terminated before continuing the execution.
+                time.sleep(1)
+
                 return output
         except subprocess.TimeoutExpired as e:
             self.logger.error('Command `{0}` timed out: {1}'.format(
@@ -130,7 +151,8 @@ class ADB(object):
 
     def shell(self, command: List[str], is_async: bool = False, timeout: Optional[int] = None) -> Optional[str]:
         """
-        Execute an adb shell command and return the output of the command as a string.
+        Execute an adb shell command on the Android device connected through adb and return the output
+        of the command as a string.
 
         :param command: The command to execute, formatted as a list of strings.
         :param is_async: When set to True, the adb shell command will run in background and the program will continue
@@ -150,7 +172,7 @@ class ADB(object):
 
     def get_property(self, property_name: str, timeout: Optional[int] = None) -> str:
         """
-        Get the value of a property.
+        Get the value of a property on the Android device connected through adb.
 
         :param property_name: The name of the property.
         :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
@@ -169,26 +191,73 @@ class ADB(object):
 
         return int(self.get_property('ro.build.version.sdk', timeout=timeout))
 
-    def reconnect(self, host: str = None, timeout: Optional[int] = None):
-        # TODO: handle errors
-        if host:
-            start_cmd = ['connect', host]
-        else:
-            start_cmd = ['start-server']
-        self.execute(['kill-server'], timeout=timeout)
-        self.execute(start_cmd)
+    def wait_for_device(self, timeout: Optional[int] = None) -> None:
+        """
+        Wait until the Android device connected through adb is ready to receive commands.
 
-    def wait_for_device(self, timeout: Optional[int] = None):
-        # TODO: handle errors
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
+        """
+
         self.execute(['wait-for-device'], timeout=timeout)
 
-    def remount(self, timeout: Optional[int] = None):
-        # TODO: handle errors
-        self.execute(['remount'], timeout=timeout)
+    def kill_server(self, timeout: Optional[int] = None) -> None:
+        """
+        Kill the adb server if it is running.
 
-    def reboot(self, timeout: Optional[int] = None):
-        # TODO: handle errors
-        self.execute(['reboot'], timeout=timeout)
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
+        """
+
+        self.execute(['kill-server'], timeout=timeout)
+
+    def connect(self, host: str = None, timeout: Optional[int] = None) -> str:
+        """
+        Start an adb server and (optionally) connect to an Android device.
+
+        :param host: (Optional) Host address of the Android device (in host[:port] format). This parameter is not
+                     needed in simple scenarios when connecting to the default emulator or to a device connected
+                     through usb cable, since in this case the connection is automatic.
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
+        :return: The string with the result of the connect operation.
+        """
+
+        if host:
+            connect_cmd = ['connect', host]
+        else:
+            connect_cmd = ['start-server']
+
+        output = self.execute(connect_cmd, timeout=timeout)
+
+        # Make sure the connect operation ended successfully.
+        if output and 'unable to connect' in output.lower():
+            raise RuntimeError('Something went wrong during the connect operation: {0}'.format(output))
+        else:
+            return output
+
+    def remount(self, timeout: Optional[int] = None) -> str:
+        """
+        Remount system partitions in writable mode (system partitions are read-only by default). This command needs
+        adb with root privileges.
+
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
+        :return: The string with the result of the remount operation.
+        """
+
+        output = self.execute(['remount'], timeout=timeout)
+
+        # Make sure the remount operation ended successfully.
+        if output and 'remount succeeded' in output.lower():
+            return output
+        else:
+            raise RuntimeError('Something went wrong during the remount operation: {0}'.format(output))
+
+    def reboot(self, timeout: Optional[int] = None) -> None:
+        """
+        Reboot the Android device connected through adb.
+
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
+        """
+
+        return self.execute(['reboot'], timeout=timeout)
 
     def push_file(self, host_path: Union[str, List[str]], device_path: str, timeout: Optional[int] = None) -> str:
         """

@@ -3,6 +3,7 @@
     <words>
       <w>keycode</w>
       <w>keyevent</w>
+      <w>pythonadb</w>
       <w>wakeup</w>
     </words>
   </dictionary>
