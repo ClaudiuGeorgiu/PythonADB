@@ -24,7 +24,7 @@ def valid_apk_path() -> pathlib.Path:
 class TestAdbAvailability(object):
 
     def test_adb_is_available(self, adb_instance: ADB):
-        assert adb_instance.adb_is_available()
+        assert adb_instance.is_available()
 
     def test_adb_not_available(self, monkeypatch):
         monkeypatch.setenv('ADB_PATH', 'fake adb path')
@@ -34,10 +34,15 @@ class TestAdbAvailability(object):
 
 class TestAdbVersion(object):
 
-    def test_adb_version(self, adb_instance: ADB):
+    def test_adb_version_success(self, adb_instance: ADB):
         adb_version = adb_instance.get_version()
         assert isinstance(adb_version, str)
         assert adb_version is not ''
+
+    def test_adb_version_failure(self, adb_instance: ADB, monkeypatch):
+        monkeypatch.setattr(ADB, 'execute', lambda _, command, timeout: 'no version')
+        with pytest.raises(RuntimeError):
+            adb_instance.get_version()
 
 
 class TestAdbDevice(object):
@@ -48,6 +53,40 @@ class TestAdbDevice(object):
         assert len(connected_devices) > 0
         assert isinstance(connected_devices[0], str)
         assert connected_devices[0] is not ''
+
+
+class TestCommandExecution(object):
+
+    def test_adb_execute_command(self, adb_instance: ADB):
+        result = adb_instance.shell(['sleep', '1'], is_async=False)
+        assert result == ''
+
+    def test_adb_execute_async_command(self, adb_instance: ADB):
+        result = adb_instance.shell(['sleep', '1'], is_async=True)
+        assert result is None
+
+    def test_adb_execute_invalid_command(self, adb_instance: ADB):
+        with pytest.raises(TypeError):
+            # noinspection PyTypeChecker
+            adb_instance.execute('not a list of strings')
+
+    def test_adb_shell_invalid_command(self, adb_instance: ADB):
+        with pytest.raises(TypeError):
+            # noinspection PyTypeChecker
+            adb_instance.shell('not a list of strings')
+
+    def test_adb_execute_invalid_timeout(self, adb_instance: ADB):
+        with pytest.raises(ValueError):
+            adb_instance.shell(['sleep', '1'], timeout=0)
+
+    def test_adb_execute_async_timeout_conflict(self, adb_instance: ADB):
+        with pytest.raises(RuntimeError):
+            adb_instance.shell(['sleep', '1'], is_async=True, timeout=3)
+
+    def test_adb_execute_generic_exception(self, adb_instance: ADB, monkeypatch):
+        monkeypatch.setattr(adb_instance.logger, 'debug', lambda _: 1/0)
+        with pytest.raises(Exception):
+            adb_instance.shell(['sleep', '1'])
 
 
 class TestCommandTimeout(object):

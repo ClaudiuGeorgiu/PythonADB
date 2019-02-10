@@ -12,6 +12,7 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s> [%(levelname)s][%(name)s][%(funcName)s()] %(message)s',
                         datefmt='%d/%m/%Y %H:%M:%S', level=logging.INFO)
 
-    adb = ADB(debug=True)
+    adb = ADB()
 
     logger.info('ADB version: {0}'.format(adb.get_version()))
+    logger.info('Connected devices: {0}'.format(adb.get_available_devices()))

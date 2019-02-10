@@ -13,6 +13,12 @@ from typing import Optional, Union, List
 class ADB(object):
 
     def __init__(self, debug: bool = False):
+        """
+        Android Debug Bridge (adb) object constructor.
+
+        :param debug: When set to True, more debug messages will be shown for each executed operation.
+        """
+
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, self.__class__.__name__))
 
         if debug:
@@ -25,17 +31,18 @@ class ADB(object):
         else:
             self.adb_path: str = 'adb'
 
-        if not self.adb_is_available():
+        if not self.is_available():
             raise FileNotFoundError('Adb executable is not available! Make sure to have adb (Android Debug Bridge) '
                                     'installed and added to the PATH variable, or specify the adb path by using the '
                                     'ADB_PATH environment variable.')
 
-    def adb_is_available(self) -> bool:
+    def is_available(self) -> bool:
         """
         Check if adb executable is available.
 
         :return: True if abd executable is available for usage, False otherwise.
         """
+
         return shutil.which(self.adb_path) is not None
 
     def execute(self, command: List[str], is_async: bool = False, timeout: Optional[int] = None) -> Optional[str]:
@@ -49,6 +56,7 @@ class ADB(object):
         :return: The (string) output of the command. If the method is called with the parameter is_async = True,
                  None will be returned.
         """
+
         if not isinstance(command, list) or any(not isinstance(command_token, str) for command_token in command):
             raise TypeError('The command to execute should be passed as a list of strings')
 
@@ -86,75 +94,101 @@ class ADB(object):
             self.logger.error('Generic error during `{0}` command execution: {1}'.format(' '.join(command), e))
             raise
 
-    def get_property(self, property_name: str) -> str:
+    def get_version(self, timeout: Optional[int] = None) -> str:
         """
-        Get the value of a property.
+        Get the version of the installed adb.
 
-        :param property_name: The name of the property.
-        :return: The value of the property.
-        """
-
-        return self.shell(['getprop', property_name])
-
-    def get_device_sdk_version(self) -> int:
-        """
-        Get the version of the SDK installed on the Android device (e.g., 23 for Android Marshmallow).
-
-        :return: An int with the version number.
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
+        :return: A string containing the version of the installed adb.
         """
 
-        return int(self.get_property('ro.build.version.sdk'))
+        output = self.execute(['version'], timeout=timeout)
 
-    def get_available_devices(self) -> List[str]:
+        match = re.search(r'version\s(.+)', output)
+        if match:
+            return match.group(1)
+        else:
+            raise RuntimeError('Unable to determine adb version')
+
+    def get_available_devices(self, timeout: Optional[int] = None) -> List[str]:
         """
         Get a list with the serials of the devices currently connected to adb.
 
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
         :return: A list of strings, each string is a device serial number.
         """
-        output = self.execute(['devices'])
+
+        output = self.execute(['devices'], timeout=timeout)
 
         devices = []
         for line in output.splitlines():
             tokens = line.strip().split()
             if len(tokens) == 2 and tokens[1] == 'device':
-                # Add to the list the ip and port of the device.
+                # Add to the list the name / ip and port of the device.
                 devices.append(tokens[0])
         return devices
 
     def shell(self, command: List[str], is_async: bool = False, timeout: Optional[int] = None) -> Optional[str]:
-        # TODO: make sure to have the command as a list
+        """
+        Execute an adb shell command and return the output of the command as a string.
+
+        :param command: The command to execute, formatted as a list of strings.
+        :param is_async: When set to True, the adb shell command will run in background and the program will continue
+                         its execution. If False (default), the program will wait until the adb shell command returns
+                         a result. This can be useful when running background scripts on the Android device.
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
+        :return: The (string) output of the command. If the method is called with the parameter is_async = True,
+                 None will be returned.
+        """
+
+        if not isinstance(command, list) or any(not isinstance(command_token, str) for command_token in command):
+            raise TypeError('The command to execute should be passed as a list of strings')
+
         command.insert(0, 'shell')
-        return self.execute(command, is_async, timeout)
 
-    def get_version(self) -> str:
-        # TODO: handle errors
-        result = self.execute(['version'])
-        match = re.search(r'version\s(.+)', result)
-        if match:
-            return match.group(1)
-        else:
-            return None
+        return self.execute(command, is_async=is_async, timeout=timeout)
 
-    def reconnect(self, host: str = None):
+    def get_property(self, property_name: str, timeout: Optional[int] = None) -> str:
+        """
+        Get the value of a property.
+
+        :param property_name: The name of the property.
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
+        :return: The value of the property.
+        """
+
+        return self.shell(['getprop', property_name], timeout=timeout)
+
+    def get_device_sdk_version(self, timeout: Optional[int] = None) -> int:
+        """
+        Get the version of the SDK installed on the Android device (e.g., 23 for Android Marshmallow).
+
+        :param timeout: How many seconds to wait for the command to finish execution before throwing an exception.
+        :return: An int with the version number.
+        """
+
+        return int(self.get_property('ro.build.version.sdk', timeout=timeout))
+
+    def reconnect(self, host: str = None, timeout: Optional[int] = None):
         # TODO: handle errors
         if host:
             start_cmd = ['connect', host]
         else:
             start_cmd = ['start-server']
-        self.execute(['kill-server'])
+        self.execute(['kill-server'], timeout=timeout)
         self.execute(start_cmd)
 
-    def wait_for_device(self):
+    def wait_for_device(self, timeout: Optional[int] = None):
         # TODO: handle errors
-        self.execute(['wait-for-device'])
+        self.execute(['wait-for-device'], timeout=timeout)
 
-    def remount(self):
+    def remount(self, timeout: Optional[int] = None):
         # TODO: handle errors
-        self.execute(['remount'])
+        self.execute(['remount'], timeout=timeout)
 
-    def reboot(self):
+    def reboot(self, timeout: Optional[int] = None):
         # TODO: handle errors
-        self.execute(['reboot'])
+        self.execute(['reboot'], timeout=timeout)
 
     def push_file(self, host_path: Union[str, List[str]], device_path: str, timeout: Optional[int] = None) -> str:
         """
@@ -188,12 +222,12 @@ class ADB(object):
 
         output = self.execute(push_cmd, timeout=timeout)
 
-        # Make sure the pull operation ended successfully.
+        # Make sure the push operation ended successfully.
         match = re.search(r'\d+ files? pushed\.', output.splitlines()[-1])
         if match:
             return output
         else:
-            raise RuntimeError('Something went wrong during the push operation')
+            raise RuntimeError('Something went wrong during the file push operation')
 
     def pull_file(self, device_path: Union[str, List[str]], host_path: str, timeout: Optional[int] = None) -> str:
         """
@@ -234,7 +268,7 @@ class ADB(object):
         if match:
             return output
         else:
-            raise RuntimeError('Something went wrong during the pull operation')
+            raise RuntimeError('Something went wrong during the file pull operation')
 
     def install_app(self, apk_path: str, replace_existing: bool = False,
                     grant_permissions: bool = False, timeout: Optional[int] = None):
