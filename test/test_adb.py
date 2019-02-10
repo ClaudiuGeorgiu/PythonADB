@@ -56,6 +56,15 @@ class TestAdbDevice(object):
         assert isinstance(connected_devices[0], str)
         assert connected_devices[0] is not ''
 
+    def test_adb_restart_adb_server(self, adb_instance: ADB):
+        adb_instance.kill_server()
+        adb_instance.connect()
+        connected_devices = adb_instance.get_available_devices()
+        assert isinstance(connected_devices, list)
+        assert len(connected_devices) > 0
+        assert isinstance(connected_devices[0], str)
+        assert connected_devices[0] is not ''
+
 
 class TestCommandExecution(object):
 
