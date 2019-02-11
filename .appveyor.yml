@@ -28,7 +28,7 @@ before_test:
 
 test_script:
   - "cd %APPVEYOR_BUILD_FOLDER%"
-  - "pytest --cov=./"
+  - "pytest --verbose --cov=./"
 
 after_test:
   - "cd %APPVEYOR_BUILD_FOLDER%"
