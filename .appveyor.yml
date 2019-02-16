@@ -34,5 +34,5 @@ test_script:
 
 after_test:
   - "cd %APPVEYOR_BUILD_FOLDER%"
-  - "codecov"
+  - "codecov -f coverage.xml"
   - "python-codacy-coverage"
