@@ -18,6 +18,7 @@ if __name__ == '__main__':
 
     # Start with a clean adb server.
     adb.kill_server()
+    adb.connect()
 
     adb_version = adb.get_version()
     logger.info('ADB version: {0}'.format(adb_version))

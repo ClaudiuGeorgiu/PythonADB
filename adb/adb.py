@@ -125,7 +125,7 @@ class ADB(object):
 
         output = self.execute(['version'], timeout=timeout)
 
-        match = re.search(r'version\s(.+)', output)
+        match = re.search(r'version\s(\S+)', output)
         if match:
             return match.group(1)
         else:
