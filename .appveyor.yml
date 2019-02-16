@@ -6,6 +6,8 @@ environment:
   global:
     VENV_TEST_DIR: "venv"
     ANDROID_HOME: "C:\\android-sdk-windows"
+    CODACY_PROJECT_TOKEN:
+      secure: "wXpnjl9VEnd2EmyByHYAeW2xdhvf+B46rSHQqDINwsdiWf3D6KehRCBmWpOmedVf"
 
 install:
   - "cd \\"
@@ -17,7 +19,7 @@ install:
   - "SET PATH=%ANDROID_HOME%\\platform-tools;%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "virtualenv --clear %VENV_TEST_DIR%"
   - "%VENV_TEST_DIR%\\Scripts\\activate.bat"
-  - "pip install codecov"
+  - "pip install codecov codacy-coverage"
   - "pip install -r requirements.txt"
 
 before_test:
@@ -28,8 +30,9 @@ before_test:
 
 test_script:
   - "cd %APPVEYOR_BUILD_FOLDER%"
-  - "pytest --verbose --cov=./"
+  - "pytest --verbose --cov=./ --cov-report xml"
 
 after_test:
   - "cd %APPVEYOR_BUILD_FOLDER%"
   - "codecov"
+  - "python-codacy-coverage"

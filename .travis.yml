@@ -9,13 +9,17 @@ android:
     - "android-21"
     - "sys-img-armeabi-v7a-android-21"
 
+env:
+  global:
+    - secure: "GuAJulhM/jotZrfFUpnZj0ymIiZQwc4yqIZ4VaHd9ToTDL256HTI3UPHbgbS9MeORgZFr6Uuz9pUusaf2ycGiP9S47ArYM8LMuZ+8sWKX0WELqqhCafbCuiceh17Xk9Eh5eyhSgOHfnbiTaXWc/ivPB63A1Zp6RcsFmK/ISK3kJIZCsz+jbVqFARUZbjPRW+lOuQw9vFyWD5E9fGTLjZzfUIrEdSJwzAYybn2R4dq8DTnleFI+PKpmbEwlO4kdZe9VTGOjKoVmhUvqBtJln5U1hAbqNVxqKYkojt6X63h20ofMk1MjkUaXSkG33nE5w35CasPjr4SK0KMJKouix6cU9Qs8LXwiKPkQp9wEVibRFfcqh7PQ4WvxniNm8mhyZemTgGQzaL3OUV0U+ckk0Jz3VGKcM4TT3P8aIDR8o/xl9a7qlijtu0b3TtVULtkTAAemL9sOWAiK4RupbWPJAMH3v3nqFHaD0dUFti9wAVMrEJrkBkUChp4w0oBUkw9EYT6OCgZK6IYXt9nEiVrBNDvUOxD5tvV4wWkqOHkamWIbl+vv4ORSbJnmkU5N+W3Ssb/4Cv/NZI/JbM5DqIbw0cUmDTJSWU/aCVDunFMWyPRRXRgwJXyw4xiyj2tFpxXXhMCx7/MwQTBe33uRcQATIaY50vUoW14H4cT3k0rE3fYdk="
+
 # Install Python 3.6 and codecov
 before_install:
   - "sudo add-apt-repository -y ppa:deadsnakes/ppa"
   - "sudo apt-get update"
   - "sudo apt-get install -y python3.6"
   - "curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6"
-  - "sudo pip3.6 install codecov"
+  - "sudo pip3.6 install codecov codacy-coverage"
 
 # Prepare the Android emulator
 before_script:
@@ -30,8 +34,9 @@ install:
 
 script:
   - "cd $TRAVIS_BUILD_DIR"
-  - "pytest --verbose --cov=./"
+  - "pytest --verbose --cov=./ --cov-report xml"
 
 after_success:
   - "cd $TRAVIS_BUILD_DIR"
   - "codecov"
+  - "python-codacy-coverage"
