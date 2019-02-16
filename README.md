@@ -2,6 +2,7 @@
 
 > Android Debug Bridge (ADB) wrapper in Python.
 
+[![Codacy](https://api.codacy.com/project/badge/Grade/18fa128fe8414a79a32c126f036dd6ac)](https://www.codacy.com/app/ClaudiuGeorgiu/PythonADB)
 [![Travis Build Status](https://travis-ci.com/ClaudiuGeorgiu/PythonADB.svg)](https://travis-ci.com/ClaudiuGeorgiu/PythonADB)
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/so1a8q0bxouym4vr?svg=true
 )](https://ci.appveyor.com/project/ClaudiuGeorgiu/pythonadb)
