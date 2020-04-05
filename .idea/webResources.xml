@@ -6,6 +6,8 @@
         <entryData>
           <resourceRoots>
             <path value="file://$PROJECT_DIR$/test/test_resources" />
+            <path value="file://$PROJECT_DIR$/.github" />
+            <path value="file://$PROJECT_DIR$/.github/workflows" />
           </resourceRoots>
         </entryData>
       </entry>

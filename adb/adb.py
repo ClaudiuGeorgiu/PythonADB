@@ -292,7 +292,7 @@ class ADB(object):
         output = self.execute(push_cmd, timeout=timeout)
 
         # Make sure the push operation ended successfully.
-        match = re.search(r'\d+ files? pushed\.', output.splitlines()[-1])
+        match = re.search(r'\d+ files? pushed[.,]', output.splitlines()[-1])
         if match:
             return output
         else:
@@ -333,7 +333,7 @@ class ADB(object):
         output = self.execute(pull_cmd, timeout=timeout)
 
         # Make sure the pull operation ended successfully.
-        match = re.search(r'\d+ files? pulled\.', output.splitlines()[-1])
+        match = re.search(r'\d+ files? pulled[.,]', output.splitlines()[-1])
         if match:
             return output
         else:
@@ -392,7 +392,7 @@ class ADB(object):
 
         # Make sure the uninstall operation ended successfully. Complete list of error messages:
         # https://android.googlesource.com/platform/frameworks/base/+/lollipop-release/core/java/android/content/pm/PackageManager.java
-        match = re.search(r'Failure \[.+?\]', output, flags=re.IGNORECASE)
+        match = re.search(r'(Failure \[.+?\])|(Unknown package: .+?)', output, flags=re.IGNORECASE)
         if not match:
             return output
         else:

@@ -7,7 +7,7 @@
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/so1a8q0bxouym4vr?svg=true
 )](https://ci.appveyor.com/project/ClaudiuGeorgiu/pythonadb)
 [![Code Coverage](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB/badge.svg)](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB)
-[![Python Version](http://img.shields.io/badge/Python-3.6-green.svg)](https://www.python.org/downloads/release/python-368/)
+[![Python Version](http://img.shields.io/badge/Python-3.6-green.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/blob/master/LICENSE)
 
 This project contains a basic Python wrapper of the command line `adb` (Android Debug Bridge) tool (by using the `subprocess` module in Python). Currently the main functions are supported (`shell` commands, file copy operations and app installation) but the wrapper is easily extensible with new features. All implemented functions support an optional timeout value (tested on Windows and Ubuntu) to let the command fail if it takes too long (can be useful during automatic testing).
