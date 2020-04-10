@@ -228,7 +228,8 @@ class ADB(object):
         output = self.execute(connect_cmd, timeout=timeout)
 
         # Make sure the connect operation ended successfully.
-        if output and 'unable to connect' in output.lower():
+        if output and any(error in output.lower()
+                          for error in ['unable to connect', 'cannot connect', 'cannot resolve']):
             raise RuntimeError('Something went wrong during the connect operation: {0}'.format(output))
         else:
             return output
@@ -250,7 +251,7 @@ class ADB(object):
         else:
             raise RuntimeError('Something went wrong during the remount operation: {0}'.format(output))
 
-    def reboot(self, timeout: Optional[int] = None) -> None:
+    def reboot(self, timeout: Optional[int] = None) -> str:
         """
         Reboot the Android device connected through adb.
 

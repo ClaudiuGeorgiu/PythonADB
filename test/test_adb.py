@@ -58,6 +58,21 @@ class TestAdbDevice(object):
         assert isinstance(connected_devices[0], str)
         assert connected_devices[0] is not ''
 
+    def test_adb_connection_error(self, adb_instance: ADB):
+        with pytest.raises(RuntimeError):
+            adb_instance.connect('unknown', timeout=30)
+
+    @pytest.mark.second_to_last
+    def test_adb_remount_error(self, adb_instance: ADB):
+        with pytest.raises(RuntimeError):
+            # This should fail because "adb root" was not executed.
+            adb_instance.remount(timeout=30)
+
+    @pytest.mark.last
+    def test_adb_reboot(self, adb_instance: ADB):
+        result = adb_instance.reboot(timeout=300)
+        assert result == ''
+
 
 class TestCommandExecution(object):
 
