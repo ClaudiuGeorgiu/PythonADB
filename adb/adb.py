@@ -229,7 +229,7 @@ class ADB(object):
 
         # Make sure the connect operation ended successfully.
         if output and any(error in output.lower()
-                          for error in ['unable to connect', 'cannot connect', 'cannot resolve']):
+                          for error in ['unable to connect', 'cannot connect', 'cannot resolve', 'failed to']):
             raise RuntimeError('Something went wrong during the connect operation: {0}'.format(output))
         else:
             return output
