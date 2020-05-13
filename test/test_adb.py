@@ -127,9 +127,11 @@ class TestFileInteraction(object):
     def test_adb_pull_multiple_valid_files(
         self, adb_instance: ADB, tmp_path: pathlib.Path
     ):
-        adb_instance.pull_file(["/etc/hosts", "/etc/fonts.xml"], os.fspath(tmp_path))
+        adb_instance.pull_file(
+            ["/etc/hosts", "/etc/permissions/platform.xml"], os.fspath(tmp_path)
+        )
         dest_file_1 = tmp_path / "hosts"
-        dest_file_2 = tmp_path / "fonts.xml"
+        dest_file_2 = tmp_path / "platform.xml"
         assert os.path.isfile(dest_file_1)
         assert os.path.isfile(dest_file_2)
         assert os.path.getsize(dest_file_1) > 0
@@ -148,7 +150,7 @@ class TestFileInteraction(object):
         dest_file = tmp_path / "invalid"
         with pytest.raises(NotADirectoryError):
             adb_instance.pull_file(
-                ["/etc/hosts", "/etc/fonts.xml"], os.fspath(dest_file)
+                ["/etc/hosts", "/etc/permissions/platform.xml"], os.fspath(dest_file)
             )
 
     def test_adb_pull_invalid_file(self, adb_instance: ADB, tmp_path: pathlib.Path):
