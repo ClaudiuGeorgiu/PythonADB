@@ -38,6 +38,10 @@ class ADB(object):
         else:
             self.adb_path: str = "adb"
 
+        # Make sure to use the full path of the executable (needed for cross-platform
+        # compatibility).
+        self.adb_path = shutil.which(self.adb_path)
+
         if not self.is_available():
             raise FileNotFoundError(
                 "Adb executable is not available! Make sure to have adb (Android "
@@ -60,7 +64,7 @@ class ADB(object):
         :return: True if abd executable is available for usage, False otherwise.
         """
 
-        return shutil.which(self.adb_path) is not None
+        return self.adb_path is not None
 
     def execute(
         self, command: List[str], is_async: bool = False, timeout: Optional[int] = None
