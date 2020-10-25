@@ -11,15 +11,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-        os: [macOS-latest]
+        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        os: [ macOS-latest ]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -43,6 +43,7 @@ jobs:
           pytest --verbose --cov=./ --cov-report xml
 
       - name: Upload tests coverage to Codacy
+        if: contains(github.event_name, 'pull_request') == false
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
         run: |

@@ -2,12 +2,12 @@
 
 > Android Debug Bridge (ADB) wrapper in Python.
 
-[![Codacy](https://api.codacy.com/project/badge/Grade/18fa128fe8414a79a32c126f036dd6ac)](https://www.codacy.com/app/ClaudiuGeorgiu/PythonADB)
+[![Codacy](https://app.codacy.com/project/badge/Grade/18fa128fe8414a79a32c126f036dd6ac)](https://www.codacy.com/gh/ClaudiuGeorgiu/PythonADB)
 [![Ubuntu Build Status](https://github.com/ClaudiuGeorgiu/PythonADB/workflows/Ubuntu/badge.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/actions?query=workflow%3AUbuntu)
 [![Windows Build Status](https://github.com/ClaudiuGeorgiu/PythonADB/workflows/Windows/badge.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/actions?query=workflow%3AWindows)
 [![MacOS Build Status](https://github.com/ClaudiuGeorgiu/PythonADB/workflows/MacOS/badge.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/actions?query=workflow%3AMacOS)
 [![Code Coverage](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB/badge.svg)](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB)
-[![Python Version](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8-green.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/Python-3.6%2B-green.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/blob/master/LICENSE)
 
 
