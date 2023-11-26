@@ -30,8 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r ./requirements.txt
 
-      - name: Run tests
-        shell: bash
+      - name: Setup emulator
         run: |
           export PATH="${PATH}:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools"
           sudo chmod a+x ${ANDROID_HOME}/tools/bin/avdmanager
@@ -41,7 +40,9 @@ jobs:
           adb wait-for-device shell 'until getprop init.svc.bootanim 2>&1 | grep -q "stopped"; do echo "--- checking emulator ---"; sleep 5; done;'
           adb wait-for-device shell 'until pm get-install-location; do echo "--- checking emulator ---"; sleep 5; done;'
           adb wait-for-device shell 'sleep 120'
-          pytest --verbose --cov=./ --cov-report xml
+
+      - name: Run tests
+        run: pytest --verbose --cov=./ --cov-report xml
 
       - name: Upload tests coverage to Codacy
         if: contains(github.event_name, 'pull_request') == false
