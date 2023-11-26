@@ -62,7 +62,7 @@ class TestAdbDevice(object):
             adb_instance.connect("unknown", timeout=30)
 
     def test_adb_remount_error(self, adb_instance: ADB):
-        with pytest.raises(RuntimeError):
+        with pytest.raises((subprocess.CalledProcessError, RuntimeError)):
             # This should fail because "adb root" was not executed.
             adb_instance.remount(timeout=30)
 

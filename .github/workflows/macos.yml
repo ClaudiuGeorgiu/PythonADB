@@ -11,23 +11,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        python-version: [ 3.8, 3.9, '3.10', '3.11', '3.12' ]
         os: [ macOS-latest ]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: x64
+          cache: pip
+          cache-dependency-path: requirements*.txt
 
       - name: Install Python packages
         run: |
           python -m pip install --upgrade pip
-          pip install -r ./requirements.txt
+          python -m pip install -r ./requirements.txt
 
       - name: Run tests
         shell: bash
@@ -44,12 +45,13 @@ jobs:
 
       - name: Upload tests coverage to Codacy
         if: contains(github.event_name, 'pull_request') == false
-        env:
-          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        run: |
-          bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Python -r ./coverage.xml
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          language: Python
+          coverage-reports: coverage.xml
 
       - name: Upload tests coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: false
