@@ -6,8 +6,7 @@ import re
 import shutil
 import subprocess
 import time
-
-from typing import Optional, Union, List
+from typing import List, Optional, Union
 
 
 class ADB:
@@ -465,9 +464,9 @@ class ADB:
                                  the new application being installed.
         :param grant_permissions: When set to True, all the runtime permissions of the
                                   application will be granted.
-        :param timeout: How many seconds to wait for the install operation before
+        :param timeout: How many seconds to wait for the installation operation before
                         throwing an exception.
-        :return: The string with the result of the install operation.
+        :return: The string with the result of the installation operation.
         """
 
         # Make sure the application to install is an existing file on the host computer.
@@ -487,7 +486,7 @@ class ADB:
 
         output = self.execute(install_cmd, timeout=timeout)
 
-        # Make sure the install operation ended successfully.
+        # Make sure the installation operation ended successfully.
         # Complete list of error messages:
         # https://android.googlesource.com/platform/frameworks/base/+/lollipop-release/core/java/android/content/pm/PackageManager.java
         match = re.search(r"Failure \[.+?\]", output, flags=re.IGNORECASE)
@@ -503,16 +502,16 @@ class ADB:
         Uninstall an application from the Android device.
 
         :param package_name: The package name of the application to uninstall.
-        :param timeout: How many seconds to wait for the uninstall operation before
+        :param timeout: How many seconds to wait for the uninstallation operation before
                         throwing an exception.
-        :return: The string with the result of the uninstall operation.
+        :return: The string with the result of the uninstallation operation.
         """
 
         uninstall_cmd = ["uninstall", package_name]
 
         output = self.execute(uninstall_cmd, timeout=timeout)
 
-        # Make sure the uninstall operation ended successfully.
+        # Make sure the uninstallation operation ended successfully.
         # Complete list of error messages:
         # https://android.googlesource.com/platform/frameworks/base/+/lollipop-release/core/java/android/content/pm/PackageManager.java
         match = re.search(

@@ -40,7 +40,7 @@ class TestAdbVersion:
     def test_adb_version_success(self, adb_instance: ADB):
         adb_version = adb_instance.get_version()
         assert isinstance(adb_version, str)
-        assert adb_version is not ""
+        assert adb_version != ""
 
     def test_adb_version_failure(self, adb_instance: ADB, monkeypatch):
         monkeypatch.setattr(ADB, "execute", lambda _, command, timeout: "no version")
@@ -58,7 +58,7 @@ class TestAdbDevice:
         assert isinstance(connected_devices, list)
         assert len(connected_devices) > 0
         assert isinstance(connected_devices[0], str)
-        assert connected_devices[0] is not ""
+        assert connected_devices[0] != ""
 
     def test_adb_connection_error(self, adb_instance: ADB):
         with pytest.raises(RuntimeError):

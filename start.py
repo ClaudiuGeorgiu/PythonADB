@@ -5,7 +5,6 @@ import logging
 from adb.adb import ADB
 
 if __name__ == "__main__":
-
     # Logging configuration.
     logger = logging.getLogger(__name__)
     logging.basicConfig(

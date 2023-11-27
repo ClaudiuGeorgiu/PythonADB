@@ -1,12 +1,9 @@
-[tool.black]
+[project]
+name = "PythonADB"
+requires-python = ">=3.8"
+
+[tool.ruff]
 line-length = 88
-include = '\.pyi?$'
-exclude = '''
-(
-    /(
-      | \.git
-      | \.github
-      | venv
-    )/
-)
-'''
+
+[tool.ruff.lint]
+extend-select = ["I"]

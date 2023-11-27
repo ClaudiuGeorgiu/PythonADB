@@ -131,3 +131,5 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+.ruff_cache/
