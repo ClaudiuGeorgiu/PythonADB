@@ -33,8 +33,9 @@ jobs:
       - name: Setup emulator
         shell: bash
         run: |
-          export PATH="${PATH}:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools"
-          sudo chmod a+x ${ANDROID_HOME}/tools/bin/avdmanager
+          export RUNNER_TRACKING_ID=""
+          export PATH="${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools"
+          sudo chmod a+x ${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager
           echo yes | sudo -E env "PATH=$PATH" sdkmanager "emulator" "system-images;android-25;default;x86" | grep -v = || true
           echo no | avdmanager create avd -f -n test -k "system-images;android-25;default;x86" --abi x86
           ${ANDROID_HOME}/emulator/emulator -avd test -no-window -no-audio -no-boot-anim -no-snapshot -no-accel -gpu guest &
