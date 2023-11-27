@@ -69,7 +69,7 @@ class TestAdbDevice:
             # This should fail because "adb root" was not executed.
             adb_instance.remount(timeout=30)
 
-    @pytest.mark.last
+    @pytest.mark.order("last")
     def test_adb_reboot(self, adb_instance: ADB):
         result = adb_instance.reboot(timeout=300)
         assert result == ""
@@ -173,7 +173,6 @@ class TestFileInteraction:
         self, adb_instance: ADB, tmp_path: pathlib.Path
     ):
         source_file_path = tmp_path / "testfile.txt"
-        # noinspection PyTypeChecker
         with open(source_file_path, "w") as source_file:
             source_file.write("This is a test file\n")
         result = adb_instance.push_file(os.fspath(source_file_path), "/data/local/tmp/")
@@ -185,7 +184,6 @@ class TestFileInteraction:
     ):
         source_file_path_1 = tmp_path / "testfile.txt"
         source_file_path_2 = tmp_path / "other.txt"
-        # noinspection PyTypeChecker
         with open(source_file_path_1, "w") as source_file_1, open(
             source_file_path_2, "w"
         ) as source_file_2:
@@ -216,7 +214,6 @@ class TestFileInteraction:
         self, adb_instance: ADB, tmp_path: pathlib.Path
     ):
         source_file_path = tmp_path / "testfile.txt"
-        # noinspection PyTypeChecker
         with open(source_file_path, "w") as source_file:
             source_file.write("This is a test file\n")
         with pytest.raises(subprocess.CalledProcessError):
@@ -229,7 +226,6 @@ class TestFileInteraction:
             ADB, "execute", lambda _, command, timeout: "incomplete transfer"
         )
         source_file_path = tmp_path / "testfile.txt"
-        # noinspection PyTypeChecker
         with open(source_file_path, "w") as source_file:
             source_file.write("This is a test file\n")
         with pytest.raises(RuntimeError):
@@ -263,7 +259,6 @@ class TestAppInstallation:
             ADB, "execute", lambda _, command, timeout: "Failure [ERROR]"
         )
         invalid_apk_path = tmp_path / "invalid.apk"
-        # noinspection PyTypeChecker
         with open(invalid_apk_path, "w") as source_file:
             source_file.write("This is not an apk file\n")
         with pytest.raises(RuntimeError):
@@ -271,7 +266,6 @@ class TestAppInstallation:
 
     def test_adb_install_invalid_apk(self, adb_instance: ADB, tmp_path: pathlib.Path):
         invalid_apk_path = tmp_path / "invalid.apk"
-        # noinspection PyTypeChecker
         with open(invalid_apk_path, "w") as source_file:
             source_file.write("This is not an apk file\n")
         with pytest.raises((subprocess.CalledProcessError, RuntimeError)):
