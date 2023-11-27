@@ -42,7 +42,9 @@ jobs:
           adb wait-for-device shell 'sleep 120'
 
       - name: Run tests
-        run: pytest --verbose --cov=./ --cov-report xml
+        run: |
+          export PATH="${PATH}:${ANDROID_HOME}/platform-tools"
+          pytest --verbose --cov=./ --cov-report xml
 
       - name: Upload tests coverage to Codacy
         if: contains(github.event_name, 'pull_request') == false
