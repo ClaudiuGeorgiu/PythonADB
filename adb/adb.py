@@ -10,7 +10,7 @@ import time
 from typing import Optional, Union, List
 
 
-class ADB(object):
+class ADB:
     def __init__(self, device: str = None, debug: bool = False):
         """
         Android Debug Bridge (adb) object constructor.
