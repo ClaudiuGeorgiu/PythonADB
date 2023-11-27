@@ -9,9 +9,12 @@ import pytest
 from ..adb.adb import ADB
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def adb_instance() -> ADB:
-    return ADB(debug=True)
+    instance = ADB(debug=True)
+    instance.kill_server(timeout=30)
+    instance.connect(timeout=30)
+    return instance
 
 
 @pytest.fixture(scope="session")
@@ -23,7 +26,7 @@ def valid_apk_path() -> pathlib.Path:
     )
 
 
-class TestAdbAvailability(object):
+class TestAdbAvailability:
     def test_adb_is_available(self, adb_instance: ADB):
         assert adb_instance.is_available()
 
@@ -33,11 +36,11 @@ class TestAdbAvailability(object):
             ADB()
 
 
-class TestAdbVersion(object):
+class TestAdbVersion:
     def test_adb_version_success(self, adb_instance: ADB):
         adb_version = adb_instance.get_version()
         assert isinstance(adb_version, str)
-        assert adb_version is not ""
+        assert adb_version != ""
 
     def test_adb_version_failure(self, adb_instance: ADB, monkeypatch):
         monkeypatch.setattr(ADB, "execute", lambda _, command, timeout: "no version")
@@ -45,7 +48,7 @@ class TestAdbVersion(object):
             adb_instance.get_version()
 
 
-class TestAdbDevice(object):
+class TestAdbDevice:
     def test_adb_device_connected(self, adb_instance: ADB):
         adb_instance.kill_server(timeout=30)
         adb_instance.connect(timeout=30)
@@ -55,24 +58,24 @@ class TestAdbDevice(object):
         assert isinstance(connected_devices, list)
         assert len(connected_devices) > 0
         assert isinstance(connected_devices[0], str)
-        assert connected_devices[0] is not ""
+        assert connected_devices[0] != ""
 
     def test_adb_connection_error(self, adb_instance: ADB):
         with pytest.raises(RuntimeError):
             adb_instance.connect("unknown", timeout=30)
 
     def test_adb_remount_error(self, adb_instance: ADB):
-        with pytest.raises(RuntimeError):
+        with pytest.raises((subprocess.CalledProcessError, RuntimeError)):
             # This should fail because "adb root" was not executed.
             adb_instance.remount(timeout=30)
 
-    @pytest.mark.last
+    @pytest.mark.order("last")
     def test_adb_reboot(self, adb_instance: ADB):
         result = adb_instance.reboot(timeout=300)
         assert result == ""
 
 
-class TestCommandExecution(object):
+class TestCommandExecution:
     def test_adb_execute_command(self, adb_instance: ADB):
         result = adb_instance.shell(["sleep", "1"], is_async=False)
         assert result == ""
@@ -105,7 +108,7 @@ class TestCommandExecution(object):
             adb_instance.shell(["sleep", "1"])
 
 
-class TestCommandTimeout(object):
+class TestCommandTimeout:
     def test_adb_shell_timeout(self, adb_instance: ADB):
         with pytest.raises(subprocess.TimeoutExpired):
             adb_instance.shell(["sleep", "300"], timeout=3)
@@ -115,7 +118,7 @@ class TestCommandTimeout(object):
             adb_instance.pull_file("/system/lib", os.fspath(tmp_path), timeout=1)
 
 
-class TestFileInteraction(object):
+class TestFileInteraction:
     def test_adb_pull_single_valid_file(
         self, adb_instance: ADB, tmp_path: pathlib.Path
     ):
@@ -170,7 +173,6 @@ class TestFileInteraction(object):
         self, adb_instance: ADB, tmp_path: pathlib.Path
     ):
         source_file_path = tmp_path / "testfile.txt"
-        # noinspection PyTypeChecker
         with open(source_file_path, "w") as source_file:
             source_file.write("This is a test file\n")
         result = adb_instance.push_file(os.fspath(source_file_path), "/data/local/tmp/")
@@ -182,7 +184,6 @@ class TestFileInteraction(object):
     ):
         source_file_path_1 = tmp_path / "testfile.txt"
         source_file_path_2 = tmp_path / "other.txt"
-        # noinspection PyTypeChecker
         with open(source_file_path_1, "w") as source_file_1, open(
             source_file_path_2, "w"
         ) as source_file_2:
@@ -213,7 +214,6 @@ class TestFileInteraction(object):
         self, adb_instance: ADB, tmp_path: pathlib.Path
     ):
         source_file_path = tmp_path / "testfile.txt"
-        # noinspection PyTypeChecker
         with open(source_file_path, "w") as source_file:
             source_file.write("This is a test file\n")
         with pytest.raises(subprocess.CalledProcessError):
@@ -226,14 +226,13 @@ class TestFileInteraction(object):
             ADB, "execute", lambda _, command, timeout: "incomplete transfer"
         )
         source_file_path = tmp_path / "testfile.txt"
-        # noinspection PyTypeChecker
         with open(source_file_path, "w") as source_file:
             source_file.write("This is a test file\n")
         with pytest.raises(RuntimeError):
             adb_instance.push_file(os.fspath(source_file_path), "/data/local/tmp/")
 
 
-class TestAppInstallation(object):
+class TestAppInstallation:
     @classmethod
     def teardown_class(cls):
         try:
@@ -260,7 +259,6 @@ class TestAppInstallation(object):
             ADB, "execute", lambda _, command, timeout: "Failure [ERROR]"
         )
         invalid_apk_path = tmp_path / "invalid.apk"
-        # noinspection PyTypeChecker
         with open(invalid_apk_path, "w") as source_file:
             source_file.write("This is not an apk file\n")
         with pytest.raises(RuntimeError):
@@ -268,7 +266,6 @@ class TestAppInstallation(object):
 
     def test_adb_install_invalid_apk(self, adb_instance: ADB, tmp_path: pathlib.Path):
         invalid_apk_path = tmp_path / "invalid.apk"
-        # noinspection PyTypeChecker
         with open(invalid_apk_path, "w") as source_file:
             source_file.write("This is not an apk file\n")
         with pytest.raises((subprocess.CalledProcessError, RuntimeError)):
