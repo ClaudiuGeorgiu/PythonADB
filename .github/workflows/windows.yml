@@ -30,20 +30,15 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r ./requirements.txt
 
-      - name: Setup emulator
+      - name: Setup emulator & run tests
         shell: bash
         run: |
-          export RUNNER_TRACKING_ID=""
           echo yes | "${ANDROID_HOME}\cmdline-tools\latest\bin\sdkmanager.bat" "emulator" "system-images;android-25;default;x86" | grep -v = || true
           echo no | "${ANDROID_HOME}\cmdline-tools\latest\bin\avdmanager.bat" create avd -f -n test -k "system-images;android-25;default;x86" --abi x86
           "${ANDROID_HOME}\emulator\emulator.exe" -avd test -no-window -no-audio -no-boot-anim -no-snapshot -no-accel -gpu guest &
           "${ANDROID_HOME}\platform-tools\adb.exe" wait-for-device shell 'until getprop init.svc.bootanim 2>&1 | grep -q "stopped"; do echo "--- checking emulator ---"; sleep 5; done;'
           "${ANDROID_HOME}\platform-tools\adb.exe" wait-for-device shell 'until pm get-install-location; do echo "--- checking emulator ---"; sleep 5; done;'
           "${ANDROID_HOME}\platform-tools\adb.exe" wait-for-device shell 'sleep 120'
-
-      - name: Run tests
-        shell: bash
-        run: |
           export ADB_PATH="${ANDROID_HOME}\platform-tools\adb.exe"
           pytest --verbose --cov=./ --cov-report xml
 
