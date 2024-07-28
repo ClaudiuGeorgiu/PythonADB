@@ -57,6 +57,6 @@ jobs:
           coverage-reports: coverage.xml
 
       - name: Upload tests coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: false
