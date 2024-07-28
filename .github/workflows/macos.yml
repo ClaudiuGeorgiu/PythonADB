@@ -32,17 +32,21 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r ./requirements.txt
 
-      - name: Setup emulator
-        shell: bash
-        run: |
-          export PATH="${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools"
-          sudo chmod a+x ${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager
-          echo yes | sudo -E env "PATH=$PATH" sdkmanager "emulator" "system-images;android-25;default;x86" | grep -v = || true
-          echo no | avdmanager create avd -f -n test -k "system-images;android-25;default;x86" --abi x86
-          ${ANDROID_HOME}/emulator/emulator -avd test -no-window -no-audio -no-boot-anim -no-snapshot -no-accel -gpu guest &
-          adb wait-for-device shell 'until getprop init.svc.bootanim 2>&1 | grep -q "stopped"; do echo "--- checking emulator ---"; sleep 5; done;'
-          adb wait-for-device shell 'until pm get-install-location; do echo "--- checking emulator ---"; sleep 5; done;'
-          adb wait-for-device shell 'sleep 120'
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
+      # - name: Setup emulator
+      #   shell: bash
+      #   run: |
+      #     export PATH="${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools"
+      #     sudo chmod a+x ${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager
+      #     echo yes | sudo -E env "PATH=$PATH" sdkmanager "emulator" "system-images;android-25;default;x86" | grep -v = || true
+      #     echo no | avdmanager create avd -f -n test -k "system-images;android-25;default;x86" --abi x86
+      #     ${ANDROID_HOME}/emulator/emulator -avd test -no-window -no-audio -no-boot-anim -no-snapshot -no-accel -gpu guest &
+      #     adb wait-for-device shell 'until getprop init.svc.bootanim 2>&1 | grep -q "stopped"; do echo "--- checking emulator ---"; sleep 5; done;'
+      #     adb wait-for-device shell 'until pm get-install-location; do echo "--- checking emulator ---"; sleep 5; done;'
+      #     adb wait-for-device shell 'sleep 120'
 
       - name: Run tests
         run: |
@@ -60,4 +64,5 @@ jobs:
       - name: Upload tests coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
