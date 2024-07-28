@@ -37,7 +37,7 @@ jobs:
         run: |
           export PATH="${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools"
           sudo chmod a+x ${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager
-          echo yes | sudo -E env "PATH=$PATH" sdkmanager "emulator" "system-images;android-25;default;x86" | grep -v = || true
+          echo yes | sudo -E env "PATH=$PATH" sdkmanager "emulator" "platform-tools" "system-images;android-25;default;x86" | grep -v = || true
           echo no | avdmanager create avd -f -n test -k "system-images;android-25;default;x86" --abi x86
           ${ANDROID_HOME}/emulator/emulator -avd test -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics -gpu swiftshader_indirect -accel on &
           adb wait-for-device shell 'until getprop init.svc.bootanim 2>&1 | grep -q "stopped"; do echo "--- checking emulator ---"; sleep 5; done;'
