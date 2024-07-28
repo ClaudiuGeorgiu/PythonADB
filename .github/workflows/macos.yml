@@ -42,7 +42,7 @@ jobs:
           ${ANDROID_HOME}/emulator/emulator -avd test -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics -gpu swiftshader_indirect -accel on &
           adb wait-for-device shell 'until getprop init.svc.bootanim 2>&1 | grep -q "stopped"; do echo "--- checking emulator ---"; sleep 5; done;'
           adb wait-for-device shell 'until pm get-install-location; do echo "--- checking emulator ---"; sleep 5; done;'
-          adb wait-for-device shell 'sleep 30'
+          adb wait-for-device shell 'sleep 10'
 
       - name: Run tests
         run: |

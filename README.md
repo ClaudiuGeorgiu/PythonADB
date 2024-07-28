@@ -4,7 +4,6 @@
 
 [![Codacy](https://app.codacy.com/project/badge/Grade/18fa128fe8414a79a32c126f036dd6ac)](https://app.codacy.com/gh/ClaudiuGeorgiu/PythonADB)
 [![Ubuntu Build Status](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/ubuntu.yml)
-[![Windows Build Status](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/windows.yml/badge.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/windows.yml)
 [![MacOS Build Status](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/macos.yml/badge.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/macos.yml)
 [![Code Coverage](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB/badge.svg)](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB)
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-green.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
