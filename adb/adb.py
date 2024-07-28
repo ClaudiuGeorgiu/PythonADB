@@ -10,7 +10,7 @@ from typing import List, Optional, Union
 
 
 class ADB:
-    def __init__(self, device: str = None, debug: bool = False):
+    def __init__(self, device: Optional[str] = None, debug: bool = False):
         """
         Android Debug Bridge (adb) object constructor.
 
@@ -32,14 +32,11 @@ class ADB:
 
         # If adb executable is not added to PATH variable, it can be specified by
         # using the ADB_PATH environment variable.
-        if "ADB_PATH" in os.environ:
-            self.adb_path: str = os.environ["ADB_PATH"]
-        else:
-            self.adb_path: str = "adb"
+        self.adb_path: str = os.environ.get("ADB_PATH", "adb")
 
         # Make sure to use the full path of the executable (needed for cross-platform
         # compatibility).
-        self.adb_path = shutil.which(self.adb_path)
+        self.adb_path = shutil.which(self.adb_path)  # type: ignore
 
         if not self.is_available():
             raise FileNotFoundError(
@@ -49,7 +46,7 @@ class ADB:
             )
 
     @property
-    def target_device(self) -> str:
+    def target_device(self) -> Optional[str]:
         return self._device
 
     @target_device.setter
@@ -169,7 +166,7 @@ class ADB:
         :return: A string containing the version of the installed adb.
         """
 
-        output = self.execute(["version"], timeout=timeout)
+        output: str = self.execute(["version"], timeout=timeout)  # type: ignore[assignment]
 
         match = re.search(r"version\s(\S+)", output)
         if match:
@@ -186,7 +183,7 @@ class ADB:
         :return: A list of strings, each string is a device serial number.
         """
 
-        output = self.execute(["devices"], timeout=timeout)
+        output: str = self.execute(["devices"], timeout=timeout)  # type: ignore[assignment]
 
         devices = []
         for line in output.splitlines():
@@ -236,7 +233,8 @@ class ADB:
         :return: The value of the property.
         """
 
-        return self.shell(["getprop", property_name], timeout=timeout)
+        property: str = self.shell(["getprop", property_name], timeout=timeout)  # type: ignore[assignment]
+        return property
 
     def get_device_sdk_version(self, timeout: Optional[int] = None) -> int:
         """
@@ -271,7 +269,7 @@ class ADB:
 
         self.execute(["kill-server"], timeout=timeout)
 
-    def connect(self, host: str = None, timeout: Optional[int] = None) -> str:
+    def connect(self, host: Optional[str] = None, timeout: Optional[int] = None) -> str:
         """
         Start an adb server and (optionally) connect to an Android device.
 
@@ -289,7 +287,7 @@ class ADB:
         else:
             connect_cmd = ["start-server"]
 
-        output = self.execute(connect_cmd, timeout=timeout)
+        output: str = self.execute(connect_cmd, timeout=timeout)  # type: ignore[assignment]
 
         # Make sure the connect operation ended successfully.
         if output and any(
@@ -335,7 +333,8 @@ class ADB:
                         before throwing an exception.
         """
 
-        return self.execute(["reboot"], timeout=timeout)
+        output: str = self.execute(["reboot"], timeout=timeout)  # type: ignore[assignment]
+        return output
 
     def push_file(
         self,
@@ -380,7 +379,7 @@ class ADB:
 
         push_cmd.append(device_path)
 
-        output = self.execute(push_cmd, timeout=timeout)
+        output: str = self.execute(push_cmd, timeout=timeout)  # type: ignore[assignment]
 
         # Make sure the push operation ended successfully.
         match = re.search(r"\d+ files? pushed[.,]", output.splitlines()[-1])
@@ -438,7 +437,7 @@ class ADB:
 
         pull_cmd.append(host_path)
 
-        output = self.execute(pull_cmd, timeout=timeout)
+        output: str = self.execute(pull_cmd, timeout=timeout)  # type: ignore[assignment]
 
         # Make sure the pull operation ended successfully.
         match = re.search(r"\d+ files? pulled[.,]", output.splitlines()[-1])
@@ -484,7 +483,7 @@ class ADB:
 
         install_cmd.append(apk_path)
 
-        output = self.execute(install_cmd, timeout=timeout)
+        output: str = self.execute(install_cmd, timeout=timeout)  # type: ignore[assignment]
 
         # Make sure the installation operation ended successfully.
         # Complete list of error messages:
@@ -509,7 +508,7 @@ class ADB:
 
         uninstall_cmd = ["uninstall", package_name]
 
-        output = self.execute(uninstall_cmd, timeout=timeout)
+        output: str = self.execute(uninstall_cmd, timeout=timeout)  # type: ignore[assignment]
 
         # Make sure the uninstallation operation ended successfully.
         # Complete list of error messages:

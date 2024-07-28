@@ -86,13 +86,11 @@ class TestCommandExecution:
 
     def test_adb_execute_invalid_command(self, adb_instance: ADB):
         with pytest.raises(TypeError):
-            # noinspection PyTypeChecker
-            adb_instance.execute("not a list of strings")
+            adb_instance.execute("not a list of strings")  # type: ignore
 
     def test_adb_shell_invalid_command(self, adb_instance: ADB):
         with pytest.raises(TypeError):
-            # noinspection PyTypeChecker
-            adb_instance.shell("not a list of strings")
+            adb_instance.shell("not a list of strings")  # type: ignore
 
     def test_adb_execute_invalid_timeout(self, adb_instance: ADB):
         with pytest.raises(ValueError):
