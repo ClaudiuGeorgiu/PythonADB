@@ -20,6 +20,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -38,7 +44,7 @@ jobs:
           sudo chmod a+x ${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager
           echo yes | sudo -E env "PATH=$PATH" sdkmanager "emulator" "platform-tools" "system-images;android-25;default;x86" | grep -v = || true
           echo no | avdmanager create avd -f -n test -k "system-images;android-25;default;x86" --abi x86
-          ${ANDROID_HOME}/emulator/emulator -avd test -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics -gpu off -accel off &
+          ${ANDROID_HOME}/emulator/emulator -avd test -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics -accel on &
           adb wait-for-device shell 'until getprop init.svc.bootanim 2>&1 | grep -q "stopped"; do echo "--- checking emulator ---"; sleep 5; done;'
           adb wait-for-device shell 'until pm get-install-location; do echo "--- checking emulator ---"; sleep 5; done;'
           adb wait-for-device shell 'sleep 30'
