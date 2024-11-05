@@ -1,6 +1,6 @@
 [project]
 name = "PythonADB"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [tool.ruff]
 line-length = 88

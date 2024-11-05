@@ -6,7 +6,7 @@
 [![Ubuntu Build Status](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/ubuntu.yml)
 [![MacOS Build Status](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/macos.yml/badge.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/actions/workflows/macos.yml)
 [![Code Coverage](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB/badge.svg)](https://codecov.io/gh/ClaudiuGeorgiu/PythonADB)
-[![Python Version](https://img.shields.io/badge/Python-3.8%2B-green.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/Python-3.9%2B-green.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ClaudiuGeorgiu/PythonADB/blob/master/LICENSE)
 
 
@@ -41,7 +41,7 @@ to specify the `adb` executable to be used by PythonADB (e.g., in Ubuntu, run
 ## ❱ Usage
 
 Apart from [ADB](https://developer.android.com/tools/adb), the only requirement of this
-project is a working `Python 3` (at least `3.8`) installation. The first thing to do is
+project is a working `Python 3` (at least `3.9`) installation. The first thing to do is
 to get a local copy of this repository, so open up a terminal in the directory where you
 want to save the project and clone the repository:
 
