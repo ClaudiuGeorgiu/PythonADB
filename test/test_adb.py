@@ -182,9 +182,10 @@ class TestFileInteraction:
     ):
         source_file_path_1 = tmp_path / "testfile.txt"
         source_file_path_2 = tmp_path / "other.txt"
-        with open(source_file_path_1, "w") as source_file_1, open(
-            source_file_path_2, "w"
-        ) as source_file_2:
+        with (
+            open(source_file_path_1, "w") as source_file_1,
+            open(source_file_path_2, "w") as source_file_2,
+        ):
             source_file_1.write("This is a test file\n")
             source_file_2.write("This is another file\n")
         result = adb_instance.push_file(
