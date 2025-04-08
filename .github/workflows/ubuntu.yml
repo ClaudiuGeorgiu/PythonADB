@@ -40,6 +40,7 @@ jobs:
 
       - name: Setup emulator
         run: |
+          ln -s /home/runner/.config/.android /home/runner/.android
           export PATH="${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools"
           sudo chmod a+x ${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager
           echo yes | sudo -E env "PATH=$PATH" sdkmanager "emulator" "platform-tools" "system-images;android-25;default;x86" | grep -v = || true
